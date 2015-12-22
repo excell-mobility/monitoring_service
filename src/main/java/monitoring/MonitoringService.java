@@ -1,5 +1,6 @@
 package monitoring;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Map;
 import org.json.JSONArray;
 
 import rest.CalendarConnector;
+import utility.MeasureConverter;
 import beans.CalendarAppointment;
 import calendarextraction.AppointmentExtraction;
 
@@ -30,17 +32,39 @@ public class MonitoringService {
 				for(String userCalendar: extractCalendarUsers) {
 					JSONArray appointmentsForCalendar = CalendarConnector.getAppointmentsForCalendar(userCalendar);
 					List<CalendarAppointment> extractAppointments = extraction.extractAppointments(appointmentsForCalendar);
+					// sort the appointments for delay test
+					Collections.sort(extractAppointments);
 					appointmentsPerCalendar.put(userCalendar, extractAppointments);
 				}
 				
-				// 2: extract the current location of all staff members
-				
-				// 3: check the route to the next appointment
+				// check, if end date and start date is between current date
+				for(String userCalendar: extractCalendarUsers) {
+					
+					List<CalendarAppointment> appointments = appointmentsPerCalendar.get(userCalendar);
+					for(int index = 0; index <= appointments.size() - 2; index++) {
+						
+						CalendarAppointment first = appointments.get(index);
+						CalendarAppointment second = appointments.get(index + 1);
+						if(first.getEndDate().before(currentDate) 
+								&& second.getStartDate().after(currentDate)) {
+							// extract the minutes to the next appointment
+							int minutesBetweenAppointments = MeasureConverter.
+									getTimeInMinutes((int) (second.getStartDate().getTime() - currentDate.getTime()));
+							// TODO 2: extract the current location of the staff member
+							
+							// TODO 3: check the route to the next appointment
+
+						}
+						
+					}
+					
+				}
 				
 				// 4: remind the customer, when the staff arrives or if staff is too late
 				
 				// sleep for 5 minutes
 				Thread.sleep(300000);
+				
 			} catch(Exception e) {
 				System.out.println("API problems, let's try again");
 				System.out.println(e);
