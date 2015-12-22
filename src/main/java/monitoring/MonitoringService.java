@@ -10,9 +10,10 @@ import org.json.JSONArray;
 import rest.CalendarConnector;
 import utility.MeasureConverter;
 import beans.CalendarAppointment;
-import calendarextraction.AppointmentExtraction;
 
 import com.google.common.collect.Maps;
+
+import extraction.AppointmentExtraction;
 
 public class MonitoringService {
 
