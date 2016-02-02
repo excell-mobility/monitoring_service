@@ -51,6 +51,7 @@ public class MonitoringService {
 						
 						CalendarAppointment first = appointments.get(index);
 						CalendarAppointment second = appointments.get(index + 1);
+						// precondition, appointments are sorted correctly and there is time between the appointments
 						if(first.getEndDate().before(currentDate) 
 								&& second.getStartDate().after(currentDate)) {
 							
