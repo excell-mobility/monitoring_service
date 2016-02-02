@@ -4,14 +4,18 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 
 import rest.CalendarConnector;
+import rest.RoutingConnector;
 import utility.MeasureConverter;
 import beans.CalendarAppointment;
+import beans.GeoPoint;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import extraction.AppointmentExtraction;
 
@@ -26,6 +30,7 @@ public class MonitoringService {
 				AppointmentExtraction extraction = new AppointmentExtraction();
 				Date currentDate = new Date();
 				Map<String, List<CalendarAppointment>> appointmentsPerCalendar = Maps.newHashMap();
+				Set<CalendarAppointment> reminderSetForSMS = Sets.newHashSet();
 				
 				// 1: get calendars and observe the appointments
 				JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
@@ -48,20 +53,31 @@ public class MonitoringService {
 						CalendarAppointment second = appointments.get(index + 1);
 						if(first.getEndDate().before(currentDate) 
 								&& second.getStartDate().after(currentDate)) {
+							
 							// extract the minutes to the next appointment
 							int minutesBetweenAppointments = MeasureConverter.
 									getTimeInMinutes((int) (second.getStartDate().getTime() - currentDate.getTime()));
-							// TODO 2: extract the current location of the staff member
 							
-							// TODO 3: check the route to the next appointment
+							// extract the current location of the staff member
+							GeoPoint currentStaffPosition = new GeoPoint(51.05, 13.7333);
+							
+							// check the route to the next appointment
+							int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
+									getTravelTime(currentStaffPosition, second.getPosition()));
+							
+							// check, if the staff can not reach the customer on time
+							if(minutesToNextAppointment > minutesBetweenAppointments 
+									&& !reminderSetForSMS.contains(second)) {
+								// TODO 4: remind the customer, when staff is too late
+								// save the appointment in reminder set
+								reminderSetForSMS.add(second);
+							}
 
 						}
 						
 					}
 					
 				}
-				
-				// 4: remind the customer, when the staff arrives or if staff is too late
 				
 				// sleep for 5 minutes
 				Thread.sleep(300000);
