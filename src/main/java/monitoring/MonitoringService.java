@@ -61,7 +61,7 @@ public class MonitoringService {
 							int minutesBetweenAppointments = MeasureConverter.
 									getTimeInMinutes((int) (secondAppointment.getStartDate().getTime() - currentDate.getTime()));
 							
-							// extract the current location of the staff member
+							// TODO extract the current location of the staff member
 							GeoPoint currentStaffPosition = new GeoPoint(51.05, 13.7333);
 							
 							// check the route to the next appointment
