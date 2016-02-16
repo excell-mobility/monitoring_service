@@ -30,6 +30,7 @@ public class MonitoringService {
 				AppointmentExtraction extraction = new AppointmentExtraction();
 				Date currentDate = new Date();
 				Map<String, List<CalendarAppointment>> appointmentsPerCalendar = Maps.newHashMap();
+				// this set is necessary to avoid duplicate reminders
 				Set<CalendarAppointment> reminderSetForSMS = Sets.newHashSet();
 				
 				// 1: get calendars and observe the appointments
