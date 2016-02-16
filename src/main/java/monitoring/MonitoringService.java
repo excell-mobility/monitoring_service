@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.json.JSONArray;
 
+import rest.BroadcastingConnector;
 import rest.CalendarConnector;
 import rest.RoutingConnector;
 import utility.MeasureConverter;
@@ -50,29 +51,30 @@ public class MonitoringService {
 					List<CalendarAppointment> appointments = appointmentsPerCalendar.get(userCalendar);
 					for(int index = 0; index <= appointments.size() - 2; index++) {
 						
-						CalendarAppointment first = appointments.get(index);
-						CalendarAppointment second = appointments.get(index + 1);
+						CalendarAppointment firstAppointment = appointments.get(index);
+						CalendarAppointment secondAppointment = appointments.get(index + 1);
 						// precondition, appointments are sorted correctly and there is time between the appointments
-						if(first.getEndDate().before(currentDate) 
-								&& second.getStartDate().after(currentDate)) {
+						if(firstAppointment.getEndDate().before(currentDate) 
+								&& secondAppointment.getStartDate().after(currentDate)) {
 							
 							// extract the minutes to the next appointment
 							int minutesBetweenAppointments = MeasureConverter.
-									getTimeInMinutes((int) (second.getStartDate().getTime() - currentDate.getTime()));
+									getTimeInMinutes((int) (secondAppointment.getStartDate().getTime() - currentDate.getTime()));
 							
 							// extract the current location of the staff member
 							GeoPoint currentStaffPosition = new GeoPoint(51.05, 13.7333);
 							
 							// check the route to the next appointment
 							int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
-									getTravelTime(currentStaffPosition, second.getPosition()));
+									getTravelTime(currentStaffPosition, secondAppointment.getPosition()));
 							
 							// check, if the staff can not reach the customer on time
 							if(minutesToNextAppointment > minutesBetweenAppointments 
-									&& !reminderSetForSMS.contains(second)) {
-								// TODO 4: remind the customer, when staff is too late
+									&& !reminderSetForSMS.contains(secondAppointment)) {
+								// TODO remind the customer, when staff is too late
+								BroadcastingConnector.sendMessageToCustomer("sms", "12345", "Wir kommen später");
 								// save the appointment in reminder set
-								reminderSetForSMS.add(second);
+								reminderSetForSMS.add(secondAppointment);
 							}
 
 						}
