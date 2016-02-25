@@ -15,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.json.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -30,9 +32,11 @@ import utility.MeasureConverter;
 @Component
 public class MonitoringService {
 	
+	private final Logger log;
 	public ConcurrentHashMap<String,Report> reportMap;
 	
 	public MonitoringService() {
+		log = LoggerFactory.getLogger(this.getClass());
 		reportMap = new ConcurrentHashMap<String,Report>();
 	}
 	
@@ -63,8 +67,6 @@ public class MonitoringService {
 			JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
 			List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
 			for(String userCalendar: extractCalendarUsers) {
-				if (userCalendar.equals("Andre"))
-					continue;
 				
 				Report report = new Report();					
 				
@@ -124,7 +126,15 @@ public class MonitoringService {
 								continue;
 						}
 					}
-						
+					
+					// check if calendar position is set, otherwise monitoring can not be applied
+					if (calendarPosition == null) {
+						log.error("Could not resolve location from calendar! Monitoring will be stopped for ID: " + userCalendar);
+						if (reportMap.contains(userCalendar))
+							reportMap.remove(userCalendar);
+						break;
+					}
+					
 					double posDistance;
 					
 					// get distance to last known position
@@ -258,8 +268,8 @@ public class MonitoringService {
 			}*/
 			
 		} catch(Exception e) {
-			System.out.println("API problems, let's try again");
-			System.out.println(e);
+			log.error("API problems, let's try again");
+			log.error(e.toString());
 		}
 	}
 	
