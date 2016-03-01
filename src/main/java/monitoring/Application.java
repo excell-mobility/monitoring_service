@@ -38,9 +38,9 @@ public class Application {
           	//.paths(PathSelectors.any())
           .build()
           .genericModelSubstitutes(ResponseEntity.class)
-          //.protocols(Sets.newHashSet("https"))
-          .host("localhost:43444")
-          //.host("dbl43.beuth-hochschule.de/excell-monitoring-api")
+          .protocols(Sets.newHashSet("https"))
+          //.host("localhost:43444")
+          .host("dbl43.beuth-hochschule.de/excell-monitoring-api")
           .apiInfo(apiInfo())
           ;
     }

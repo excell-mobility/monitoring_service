@@ -16,7 +16,7 @@ import monitoring.component.MonitoringService;
 import monitoring.model.Report;
 
 @RestController
-@Api(value="/v1/scheduling")
+@Api(value="/v1/monitoring")
 public class MonitoringController {	
 	
 	@Autowired
@@ -28,15 +28,17 @@ public class MonitoringController {
     		response=Report.class,
     		produces = "application/json")
     @ResponseBody
-    public JSONObject scheduling(
+    public JSONObject monitoring(
     		@ApiParam(name="calendarId", value="Id of monitored sensor", defaultValue="") 
     		@RequestParam(value="calendarId", defaultValue="") String calendarId) {
         
-		return monitoringService.getReport(calendarId);
+		JSONObject response = monitoringService.getReport(calendarId);
+		return response;
     }
     
     @ExceptionHandler(value = Exception.class)
-    public String inputParameterError() {
+    public String inputParameterError(Exception e) {
+    	e.printStackTrace();
     	return "Your input parameters for the monitoring service are invalid!";
     }
     

@@ -128,10 +128,14 @@ public class MonitoringService {
 			
 			for(String userCalendar: extractCalendarUsers) {
 				
+				// only start monitoring if calendar is tracked
+				if (!positions.containsKey(userCalendar))
+					continue;
+				
 				Report report = new Report();
 				
 				// get current position of monitored user from Tracking Service
-				//GeoPoint currentPosition = TrackingConnector.getCurrentPosition(userCalendar);
+				//GeoPoint currentPosition = TrackingConnector.getCurrentPosition(userCalendar);				
 				GeoPoint currentPosition = positions.get(userCalendar);
 				
 				CalendarAppointment appointment = null;
