@@ -75,7 +75,7 @@ public class MonitoringService {
 		simAppointments.put("Track1", Lists.newArrayList(
 				new CalendarAppointment(new GeoPoint(51.029943, 13.718802),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track1"),
 				new CalendarAppointment(new GeoPoint(51.029230, 13.707544),addTime(simCalendar,5,45),addTime(simCalendar,0,15),"Track1"),
-				new CalendarAppointment(new GeoPoint(51.042258, 13.722375),addTime(simCalendar,10,35),addTime(simCalendar,0,20),"Track1"),
+				//new CalendarAppointment(new GeoPoint(51.042258, 13.722375),addTime(simCalendar,10,35),addTime(simCalendar,0,20),"Track1"),
 				new CalendarAppointment(new GeoPoint(51.071538, 13.730782),addTime(simCalendar,12,50),addTime(simCalendar,30,0),"Track1")));
 		
 		simCalendar.setTime(startDate);
@@ -89,7 +89,6 @@ public class MonitoringService {
 		simAppointments.put("Track3", Lists.newArrayList(
 				new CalendarAppointment(new GeoPoint(51.090607, 13.715340),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track3"),
 				new CalendarAppointment(new GeoPoint(51.051607, 13.797407),addTime(simCalendar,29,45),addTime(simCalendar,60,0),"Track3")));
-		
 	}
 	
 	@Scheduled(fixedRate = 2000)
@@ -105,9 +104,13 @@ public class MonitoringService {
 			//Date currentDate = format.parse("February 24, 2016");//new Date();
 			Date currentDate = SimulatorConnector.getCurrentSimTime();
 			
+			// calculate how much time is passed since last update
+			//long timePassed = currentDate.getTime() - simTime.getTime();
+			//simTime = currentDate;
+			
+			
 			// get simulated tracking positions
 			HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
-			
 			/*
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 			LocalTime midnight = LocalTime.MIDNIGHT;
@@ -125,7 +128,6 @@ public class MonitoringService {
 			//JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
 			//List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
 			
-			
 			for(String userCalendar: extractCalendarUsers) {
 				
 				// only start monitoring if calendar is tracked
@@ -138,9 +140,8 @@ public class MonitoringService {
 				//GeoPoint currentPosition = TrackingConnector.getCurrentPosition(userCalendar);				
 				GeoPoint currentPosition = positions.get(userCalendar);
 				
-				CalendarAppointment appointment = null;
+				CalendarAppointment nextAppointment = null;
 				GeoPoint calendarPosition = null;
-				boolean duringAppointment = false;
 				boolean lastAppointment = false;
 				boolean doTimeCheck = true;
 				
@@ -152,57 +153,47 @@ public class MonitoringService {
 				List<CalendarAppointment> appointments = simAppointments.get(userCalendar);
 				int appointmentCount = appointments.size();
 				
-				// TODO get entire route for the day
-				// List<Double> routeTotal = RouteConnector.getRoute(positions[]);
-				//report.setRouteTotal(routeTotal);
+				// set total route for the day
+				if (!reportMap.containsKey(userCalendar)) {
+					GeoPoint[] appPositions = new GeoPoint[appointmentCount];
+					
+					for(int i = 0; i < appointmentCount; i++) {
+						appPositions[i] = appointments.get(i).getPosition();
+					}
+					
+					report.setRouteTotal(RoutingConnector.getRoute(appPositions));
+				}
+				else
+					report.setRouteTotal(reportMap.get(userCalendar).getRouteTotal());
 				
 				// find matching appointment for current time
 				for(int index = 0; index < appointmentCount; index++) {
 					
-					appointment = appointments.get(index);
+					nextAppointment = appointments.get(index);					
 					
 					// if appointment lies already completely in the past, continue with next one
-					if (appointment.getEndDate().before(currentDate))
+					if (nextAppointment.getEndDate().before(currentDate))
 						continue;
 					
-					// check if currentDate is before firstAppointment
-					if (appointment.getStartDate().after(currentDate)) {
-						calendarPosition = appointment.getPosition();
-						break;
-					}
-					else {
-						calendarPosition = appointment.getPosition();
-						
-						// currentDate is during firstAppointment
-						if (appointment.getStartDate().before(currentDate) &&
-								appointment.getEndDate().after(currentDate))
-							duringAppointment = true;
-							
-						// check for next appointment
-						if (index < appointmentCount-1) {
-							// get next appointment to compare
-							CalendarAppointment secondAppointment = appointments.get(index + 1);
+					// appointment is going to happen or happening right now
+					// get position of this appointment
+					calendarPosition = nextAppointment.getPosition();
 					
-							// currentData is already after secondAppointment, so continue
-							if (secondAppointment.getEndDate().before(currentDate))
-								continue;
-						
-							// use secondAppointment as appointment in the following
-							// in order to get variables such as route, estimatedTimeOfArrival, delay
-							if (duringAppointment) {
-								appointment = secondAppointment;
-								break;
-							}
-							else
-								continue;
-						}
-						else {
+					// check if currentDate is before firstAppointment
+					if (nextAppointment.getStartDate().after(currentDate))
+						break;
+					else {
+						// currentDate is during firstAppointment							
+						// check for next appointment in order to get the route, estimatedTimeOfArrival and delay
+						if (index < appointmentCount-1)
+							// get next appointment to compare
+							nextAppointment = appointments.get(index + 1);
+						else
 							// no more appointments left
 							lastAppointment = true;
-						}
 					}
 				}
-					
+				
 				// check if calendar position is set, otherwise monitoring can not be applied
 				if (calendarPosition != null) {
 					double posDistance;
@@ -218,11 +209,19 @@ public class MonitoringService {
 					
 					// check if position has changed
 					if (posDistance < 100) {
-						// if not, check if an appointment is taking place at the moment
-						if (duringAppointment) {
-							// if yes, check if currentPosition is also near to location of appointment
+						// if not and if previous state has been AT_APPOINTMENT
+						// it can be considered that status remains the same
+						if (reportMap.containsKey(userCalendar))
+							if (reportMap.get(userCalendar).getStatus() == Report.WorkStatus.AT_APPOINTMENT) {
+								report.setPosition(calendarPosition);
+								report.setStatus(Report.WorkStatus.AT_APPOINTMENT);
+							}
+						
+						// check status if it is not set
+						if (report.getStatus() == null) {
+							// check if currentPosition is also near to location of appointment
 							posDistance = getDistance(currentPosition, calendarPosition);
-													
+						
 							if (posDistance < 500) {
 								// sensor is not moving and near appointment
 								report.setPosition(calendarPosition);
@@ -235,14 +234,8 @@ public class MonitoringService {
 							else {
 								//sensor is not moving but also > 500 away from appointment
 								report.setPosition(currentPosition);
-								report.setStatus(Report.WorkStatus.UNKNOWN);
+								report.setStatus(Report.WorkStatus.ON_THE_MOVE);
 							}
-						}
-						else {
-							// position has not changed >100m but no appointment at the moment
-							// consider this as ON_THE_MOVE
-							report.setPosition(currentPosition);
-							report.setStatus(Report.WorkStatus.ON_THE_MOVE);
 						}
 					}
 					else {
@@ -255,12 +248,12 @@ public class MonitoringService {
 					
 					if (doTimeCheck) {
 						// get route to next appointment
-						List<Double[]> routeNext = RoutingConnector.getGPSCoordinates(currentPosition, appointment.getPosition());
+						List<Double[]> routeNext = RoutingConnector.getGPSCoordinates(currentPosition, nextAppointment.getPosition());
 						report.setRouteNext(routeNext);
 						
 						// get travel time to next appointment from current time
 						int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
-								getTravelTime(currentPosition, appointment.getPosition()));
+								getTravelTime(currentPosition, nextAppointment.getPosition()));
 						
 						// compare estimated time of arrival with startTime of next appointment and set delay
 						Calendar calendar = Calendar.getInstance();
@@ -268,17 +261,22 @@ public class MonitoringService {
 						calendar.add(Calendar.MINUTE, minutesToNextAppointment);
 						Date expectedTimeOfArrival = calendar.getTime();
 						
-						if (expectedTimeOfArrival.before(appointment.getStartDate())) {
+						if (expectedTimeOfArrival.before(nextAppointment.getStartDate())) {
 							report.setTimeStatus(Report.TimeStatus.IN_TIME);
-							report.setExpectedTimeOfArrival(appointment.getStartDate());
+							report.setExpectedTimeOfArrival(nextAppointment.getStartDate());
 							report.setDelayInMin(0);
 						}
 						else {
-							report.setTimeStatus(Report.TimeStatus.DELAYED);
 							report.setExpectedTimeOfArrival(expectedTimeOfArrival);
 							Long delay = TimeUnit.MILLISECONDS.toMinutes(
-									expectedTimeOfArrival.getTime() - appointment.getStartDate().getTime());
+									expectedTimeOfArrival.getTime() - nextAppointment.getStartDate().getTime());
 							// always add 1 minute (rounding up the seconds)
+							// only set time status to DELAYED if delay is greater than 10 min
+							if (delay.intValue() + 1 >= 10)
+								report.setTimeStatus(Report.TimeStatus.DELAYED);
+							else
+								report.setTimeStatus(Report.TimeStatus.IN_TIME);
+							
 							report.setDelayInMin(delay.intValue() + 1);
 						}
 					}
@@ -296,7 +294,7 @@ public class MonitoringService {
 					reportMap.put(userCalendar, report);
 				}
 				else {
-					log.error("Could not resolve location from calendar! Monitoring will be stopped for ID: " + userCalendar);
+					log.info("Could not resolve location from calendar! Monitoring will be stopped for ID: " + userCalendar);
 					if (reportMap.containsKey(userCalendar))
 						reportMap.remove(userCalendar);
 				}
@@ -362,7 +360,10 @@ public class MonitoringService {
 			
 		} catch(Exception e) {
 			log.error("API problems, let's try again");
-			log.error(e.toString());
+//			log.error(e.toString());
+			for (int i = 0; i < e.getStackTrace().length; i++) {
+				log.error(e.getStackTrace()[i].toString());
+			}
 		}
 	}
 	
