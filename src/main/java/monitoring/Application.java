@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import com.google.common.collect.Sets;
+//import com.google.common.collect.Sets;
 
 import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
@@ -38,7 +38,7 @@ public class Application {
           	//.paths(PathSelectors.any())
           .build()
           .genericModelSubstitutes(ResponseEntity.class)
-          .protocols(Sets.newHashSet("https"))
+          //.protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
           .host("dbl43.beuth-hochschule.de/excell-monitoring-api")
           .apiInfo(apiInfo())

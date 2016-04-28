@@ -2,6 +2,7 @@ package monitoring.controller;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -15,6 +16,7 @@ import io.swagger.annotations.ApiParam;
 import monitoring.component.MonitoringService;
 import monitoring.model.Report;
 
+@CrossOrigin(origins = "*")
 @RestController
 @Api(value="/v1/monitoring")
 public class MonitoringController {	
