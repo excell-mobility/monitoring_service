@@ -122,7 +122,10 @@ public class MonitoringService {
 				//simTime = currentDate;
 				
 				// get simulated tracking positions
-				HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
+//				HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
+				
+				// use point from TUD tracking service
+				HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
 				
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 				LocalTime midnight = LocalTime.MIDNIGHT;
@@ -141,6 +144,8 @@ public class MonitoringService {
 				List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
 				
 				for(String userCalendar: extractCalendarUsers) {
+					
+					positions.put(userCalendar, TrackingConnector.getCurrentPosition(userCalendar));
 					
 					// only start monitoring if calendar is tracked
 					if (!positions.containsKey(userCalendar))
