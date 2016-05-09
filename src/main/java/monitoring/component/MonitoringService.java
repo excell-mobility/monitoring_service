@@ -104,9 +104,9 @@ public class MonitoringService {
 	public void update() {
 		
 		try {
-			String simStatus = SimulatorConnector.getCurrentStatus();
+//			String simStatus = SimulatorConnector.getCurrentStatus();
 			
-			if (!simStatus.equals("pause")) {
+//			if (!simStatus.equals("pause")) {
 				
 				AppointmentExtraction extraction = new AppointmentExtraction();
 //				GeocodingExtraction geoExtraction = new GeocodingExtraction();
@@ -369,7 +369,7 @@ public class MonitoringService {
 					}
 					
 				}*/
-			}
+//			}
 			
 		} catch(Exception e) {
 			log.error("API problems, let's try again");
