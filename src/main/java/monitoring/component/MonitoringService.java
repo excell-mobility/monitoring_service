@@ -100,7 +100,7 @@ public class MonitoringService {
 //				new CalendarAppointment(new GeoPoint(51.051607, 13.797407),addTime(simCalendar,29,45),addTime(simCalendar,60,0),"Track3")));
 //	}
 	
-	@Scheduled(fixedRate = 2000)
+	@Scheduled(fixedRate = 15000)
 	public void update() {
 		
 		try {
