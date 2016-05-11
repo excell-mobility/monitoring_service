@@ -174,17 +174,27 @@ public class MonitoringService {
 					int appointmentCount = appointments.size();
 					
 					// set total route for the day
-					if (!reportMap.containsKey(userCalendar)) {
-						GeoPoint[] appPositions = new GeoPoint[appointmentCount];
-						
-						for(int i = 0; i < appointmentCount; i++) {
-							appPositions[i] = appointments.get(i).getPosition();
+					if (appointmentCount > 1) {
+						if (!reportMap.containsKey(userCalendar)) {
+							GeoPoint[] appPositions = new GeoPoint[appointmentCount];
+							boolean calcRouteTotal = true;
+							
+							for(int i = 0; i < appointmentCount; i++) {
+								GeoPoint pos = appointments.get(i).getPosition();
+								if (pos != null)
+									appPositions[i] = pos;
+								else {
+									calcRouteTotal = false;
+									break;
+								}
+							}
+							
+							if (calcRouteTotal)
+								report.setRouteTotal(RoutingConnector.getRoute(appPositions));
 						}
-						
-						report.setRouteTotal(RoutingConnector.getRoute(appPositions));
+						else
+							report.setRouteTotal(reportMap.get(userCalendar).getRouteTotal());
 					}
-					else
-						report.setRouteTotal(reportMap.get(userCalendar).getRouteTotal());
 					
 					// find matching appointment for current time
 					for(int index = 0; index < appointmentCount; index++) {
@@ -269,35 +279,38 @@ public class MonitoringService {
 						if (doTimeCheck) {
 							// get route to next appointment
 							List<Double[]> routeNext = RoutingConnector.getGPSCoordinates(currentPosition, nextAppointment.getPosition());
-							report.setRouteNext(routeNext);
 							
-							// get travel time to next appointment from current time
-							int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
-									getTravelTime(currentPosition, nextAppointment.getPosition()));
-							
-							// compare estimated time of arrival with startTime of next appointment and set delay
-							Calendar calendar = Calendar.getInstance();
-							calendar.setTime(currentDate);
-							calendar.add(Calendar.MINUTE, minutesToNextAppointment);
-							Date expectedTimeOfArrival = calendar.getTime();
-							
-							if (expectedTimeOfArrival.before(nextAppointment.getStartDate())) {
-								report.setTimeStatus(Report.TimeStatus.IN_TIME);
-								report.setExpectedTimeOfArrival(nextAppointment.getStartDate());
-								report.setDelayInMin(0);
-							}
-							else {
-								report.setExpectedTimeOfArrival(expectedTimeOfArrival);
-								Long delay = TimeUnit.MILLISECONDS.toMinutes(
-										expectedTimeOfArrival.getTime() - nextAppointment.getStartDate().getTime());
-								// always add 1 minute (rounding up the seconds)
-								// only set time status to DELAYED if delay is greater than 10 min
-								if (delay.intValue() + 1 >= 10)
-									report.setTimeStatus(Report.TimeStatus.DELAYED);
-								else
-									report.setTimeStatus(Report.TimeStatus.IN_TIME);
+							if (routeNext != null && !routeNext.isEmpty()) {
+								report.setRouteNext(routeNext);
 								
-								report.setDelayInMin(delay.intValue() + 1);
+								// get travel time to next appointment from current time
+								int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
+										getTravelTime(currentPosition, nextAppointment.getPosition()));
+								
+								// compare estimated time of arrival with startTime of next appointment and set delay
+								Calendar calendar = Calendar.getInstance();
+								calendar.setTime(currentDate);
+								calendar.add(Calendar.MINUTE, minutesToNextAppointment);
+								Date expectedTimeOfArrival = calendar.getTime();
+								
+								if (expectedTimeOfArrival.before(nextAppointment.getStartDate())) {
+									report.setTimeStatus(Report.TimeStatus.IN_TIME);
+									report.setExpectedTimeOfArrival(nextAppointment.getStartDate());
+									report.setDelayInMin(0);
+								}
+								else {
+									report.setExpectedTimeOfArrival(expectedTimeOfArrival);
+									Long delay = TimeUnit.MILLISECONDS.toMinutes(
+											expectedTimeOfArrival.getTime() - nextAppointment.getStartDate().getTime());
+									// always add 1 minute (rounding up the seconds)
+									// only set time status to DELAYED if delay is greater than 10 min
+									if (delay.intValue() + 1 >= 10)
+										report.setTimeStatus(Report.TimeStatus.DELAYED);
+									else
+										report.setTimeStatus(Report.TimeStatus.IN_TIME);
+									
+									report.setDelayInMin(delay.intValue() + 1);
+								}
 							}
 						}
 						else {
