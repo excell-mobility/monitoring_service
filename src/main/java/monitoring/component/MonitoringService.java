@@ -145,7 +145,10 @@ public class MonitoringService {
 				
 				for(String userCalendar: extractCalendarUsers) {
 					
-					positions.put(userCalendar, TrackingConnector.getCurrentPosition(userCalendar));
+					GeoPoint currentPositionTrackingResult = TrackingConnector.getCurrentPosition(userCalendar);
+					if(currentPositionTrackingResult != null) {
+						positions.put(userCalendar, currentPositionTrackingResult);
+					}
 					
 					// only start monitoring if calendar is tracked
 					if (!positions.containsKey(userCalendar))
