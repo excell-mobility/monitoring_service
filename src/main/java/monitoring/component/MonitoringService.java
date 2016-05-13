@@ -51,82 +51,82 @@ public class MonitoringService {
 	public ConcurrentHashMap<String,Report> reportMap;
 	
 	// variables for simulation
-//	private List<String> extractCalendarUsers;
-//	private HashMap<String,List<CalendarAppointment>> simAppointments;
+	private List<String> extractCalendarUsers;
+	private HashMap<String,List<CalendarAppointment>> simAppointments;
 	
 	public MonitoringService() {
 		log = LoggerFactory.getLogger(this.getClass());
 		reportMap = new ConcurrentHashMap<String,Report>();
 		
-//		initSim();
+		initSim();
 	}
 	
-//	private void initSim() {
-//		extractCalendarUsers = new ArrayList<String>();
-//		extractCalendarUsers.add("Track1");
-//		extractCalendarUsers.add("Track2");
-//		extractCalendarUsers.add("Track3");
-//		
-//		DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
-//		Date startDate = null;
-//		
-//		try {
-//			startDate = format.parse("January 1, 2010");
-//		} catch (ParseException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		Calendar simCalendar = Calendar.getInstance();
-//		simCalendar.setTime(startDate);
-//		
-//		simAppointments = new HashMap<String,List<CalendarAppointment>>();
-//		
-//		simAppointments.put("Track1", Lists.newArrayList(
-//				new CalendarAppointment(new GeoPoint(51.029943, 13.718802),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track1"),
-//				new CalendarAppointment(new GeoPoint(51.029230, 13.707544),addTime(simCalendar,5,45),addTime(simCalendar,0,15),"Track1"),
-//				//new CalendarAppointment(new GeoPoint(51.042258, 13.722375),addTime(simCalendar,10,35),addTime(simCalendar,0,20),"Track1"),
-//				new CalendarAppointment(new GeoPoint(51.071538, 13.730782),addTime(simCalendar,22,45),addTime(simCalendar,30,0),"Track1")));
-//		
-//		simCalendar.setTime(startDate);
-//		
-//		simAppointments.put("Track2", Lists.newArrayList(
-//				new CalendarAppointment(new GeoPoint(51.044603, 13.802338),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track2"),
-//				new CalendarAppointment(new GeoPoint(51.044262, 13.690923),addTime(simCalendar,24,45),addTime(simCalendar,35,0),"Track2")));
-//		
-//		simCalendar.setTime(startDate);
-//		
-//		simAppointments.put("Track3", Lists.newArrayList(
-//				new CalendarAppointment(new GeoPoint(51.090607, 13.715340),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track3"),
-//				new CalendarAppointment(new GeoPoint(51.051607, 13.797407),addTime(simCalendar,29,45),addTime(simCalendar,60,0),"Track3")));
-//	}
+	private void initSim() {
+		extractCalendarUsers = new ArrayList<String>();
+		extractCalendarUsers.add("Track1");
+		extractCalendarUsers.add("Track2");
+		extractCalendarUsers.add("Track3");
+		
+		DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
+		Date startDate = null;
+		
+		try {
+			startDate = format.parse("January 1, 2010");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		Calendar simCalendar = Calendar.getInstance();
+		simCalendar.setTime(startDate);
+		
+		simAppointments = new HashMap<String,List<CalendarAppointment>>();
+		
+		simAppointments.put("Track1", Lists.newArrayList(
+				new CalendarAppointment(new GeoPoint(51.029943, 13.718802),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track1"),
+				new CalendarAppointment(new GeoPoint(51.029230, 13.707544),addTime(simCalendar,5,45),addTime(simCalendar,0,15),"Track1"),
+				//new CalendarAppointment(new GeoPoint(51.042258, 13.722375),addTime(simCalendar,10,35),addTime(simCalendar,0,20),"Track1"),
+				new CalendarAppointment(new GeoPoint(51.071538, 13.730782),addTime(simCalendar,22,45),addTime(simCalendar,30,0),"Track1")));
+		
+		simCalendar.setTime(startDate);
+		
+		simAppointments.put("Track2", Lists.newArrayList(
+				new CalendarAppointment(new GeoPoint(51.044603, 13.802338),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track2"),
+				new CalendarAppointment(new GeoPoint(51.044262, 13.690923),addTime(simCalendar,24,45),addTime(simCalendar,35,0),"Track2")));
+		
+		simCalendar.setTime(startDate);
+		
+		simAppointments.put("Track3", Lists.newArrayList(
+				new CalendarAppointment(new GeoPoint(51.090607, 13.715340),addTime(simCalendar,0,5),addTime(simCalendar,0,10),"Track3"),
+				new CalendarAppointment(new GeoPoint(51.051607, 13.797407),addTime(simCalendar,29,45),addTime(simCalendar,60,0),"Track3")));
+	}
 	
-	@Scheduled(fixedRate = 15000)
+	@Scheduled(fixedRate = 2000)
 	public void update() {
 		
 		try {
-//			String simStatus = SimulatorConnector.getCurrentStatus();
+			String simStatus = SimulatorConnector.getCurrentStatus();
 			
-//			if (!simStatus.equals("pause")) {
+			if (!simStatus.equals("pause")) {
 				
 				AppointmentExtraction extraction = new AppointmentExtraction();
 //				GeocodingExtraction geoExtraction = new GeocodingExtraction();
 				
 				// get current time
-				Date currentDate = new Date();
+//				Date currentDate = new Date();
 //				DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
 //				Date currentDate = format.parse("February 24, 2016");//new Date();
-//				Date currentDate = SimulatorConnector.getCurrentSimTime();
+				Date currentDate = SimulatorConnector.getCurrentSimTime();
 				
 				// calculate how much time is passed since last update
-				//long timePassed = currentDate.getTime() - simTime.getTime();
-				//simTime = currentDate;
+//				long timePassed = currentDate.getTime() - simTime.getTime();
+//				simTime = currentDate;
 				
 				// get simulated tracking positions
-//				HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
+				HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
 				
 				// use point from TUD tracking service
-				HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
-				
+//				HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
+				/*
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 				LocalTime midnight = LocalTime.MIDNIGHT;
 				LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
@@ -137,7 +137,7 @@ public class MonitoringService {
 				// construct time filter
 				StringBuilder timeFilter = new StringBuilder("")
 						.append("{\"begin\": \"").append(todayMidnight).append("\",")
-						.append("\"end\": \"").append(tomorrowMidnight).append("\"}");
+						.append("\"end\": \"").append(tomorrowMidnight).append("\"}");*/
 				
 				// loop over users
 				JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
@@ -166,11 +166,11 @@ public class MonitoringService {
 					boolean doTimeCheck = true;
 					
 					// get list of appointments of monitored user from Calendar Service
-					JSONArray appointmentsForCalendar = CalendarConnector.getAppointmentsForCalendar(
-							userCalendar, timeFilter.toString());
+//					JSONArray appointmentsForCalendar = CalendarConnector.getAppointmentsForCalendar(
+//							userCalendar, timeFilter.toString());
 					
-					List<CalendarAppointment> appointments = extraction.extractAppointments(appointmentsForCalendar);
-//					List<CalendarAppointment> appointments = simAppointments.get(userCalendar);
+//					List<CalendarAppointment> appointments = extraction.extractAppointments(appointmentsForCalendar);
+					List<CalendarAppointment> appointments = simAppointments.get(userCalendar);
 					int appointmentCount = appointments.size();
 					
 					// set total route for the day
@@ -390,7 +390,7 @@ public class MonitoringService {
 					}
 					
 				}*/
-//			}
+			}
 			
 		} catch(Exception e) {
 			log.error("API problems, let's try again");
