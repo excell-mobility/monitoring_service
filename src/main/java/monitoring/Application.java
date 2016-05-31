@@ -32,7 +32,7 @@ public class Application {
     @Bean
     public Docket monitoringApi() { 
         return new Docket(DocumentationType.SWAGGER_2)
-          .groupName("excell-monitoring-api")
+          .groupName("excell-monitoring-api-demo")
           .select()
           	//.apis(RequestHandlerSelectors.any()) 
           	//.paths(PathSelectors.any())

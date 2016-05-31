@@ -3,16 +3,6 @@ package monitoring.component;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-//import java.time.LocalDate;
-//import java.time.LocalTime;
-//import java.time.ZoneId;
-//import java.time.ZonedDateTime;
-//import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -22,7 +12,6 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.json.JSONArray;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,14 +20,12 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 
-import extraction.AppointmentExtraction;
-import extraction.GeocodingExtraction;
 import beans.CalendarAppointment;
 import beans.GeoPoint;
 //import extraction.AppointmentExtraction;
 //import extraction.GeocodingExtraction;
 import monitoring.model.Report;
-import rest.CalendarConnector;
+//import rest.CalendarConnector;
 import rest.RoutingConnector;
 import rest.SimulatorConnector;
 import rest.TrackingConnector;
@@ -48,6 +35,11 @@ import utility.MeasureConverter;
 public class MonitoringService {
 	
 	private final Logger log;
+//	private final CalendarConnector calendarConnector;
+	private final RoutingConnector routingConnector;
+	private final SimulatorConnector simulatorConnector;
+	private final TrackingConnector trackingConnector;	
+	
 	public ConcurrentHashMap<String,Report> reportMap;
 	
 	// variables for simulation
@@ -55,7 +47,12 @@ public class MonitoringService {
 	private HashMap<String,List<CalendarAppointment>> simAppointments;
 	
 	public MonitoringService() {
-		log = LoggerFactory.getLogger(this.getClass());
+		this.log = LoggerFactory.getLogger(this.getClass());
+//		this.calendarConnector = new CalendarConnector();
+		this.routingConnector = new RoutingConnector();
+		this.simulatorConnector = new SimulatorConnector();
+		this.trackingConnector = new TrackingConnector();
+		
 		reportMap = new ConcurrentHashMap<String,Report>();
 		
 		initSim();
@@ -104,25 +101,25 @@ public class MonitoringService {
 	public void update() {
 		
 		try {
-			String simStatus = SimulatorConnector.getCurrentStatus();
+			String simStatus = simulatorConnector.getCurrentStatus();
 			
 			if (!simStatus.equals("pause")) {
 				
-				AppointmentExtraction extraction = new AppointmentExtraction();
+//				AppointmentExtraction extraction = new AppointmentExtraction();
 //				GeocodingExtraction geoExtraction = new GeocodingExtraction();
 				
 				// get current time
 //				Date currentDate = new Date();
 //				DateFormat format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
 //				Date currentDate = format.parse("February 24, 2016");//new Date();
-				Date currentDate = SimulatorConnector.getCurrentSimTime();
+				Date currentDate = simulatorConnector.getCurrentSimTime();
 				
 				// calculate how much time is passed since last update
 //				long timePassed = currentDate.getTime() - simTime.getTime();
 //				simTime = currentDate;
 				
 				// get simulated tracking positions
-				HashMap<String,GeoPoint> positions = TrackingConnector.getCurrentPositions();
+				HashMap<String,GeoPoint> positions = trackingConnector.getCurrentPositions();
 				
 				// use point from TUD tracking service
 //				HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
@@ -140,15 +137,15 @@ public class MonitoringService {
 						.append("\"end\": \"").append(tomorrowMidnight).append("\"}");*/
 				
 				// loop over users
-				JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
-				List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
+				//JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
+				//List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
 				
 				for(String userCalendar: extractCalendarUsers) {
 					
-					GeoPoint currentPositionTrackingResult = TrackingConnector.getCurrentPosition(userCalendar);
+					/*GeoPoint currentPositionTrackingResult = TrackingConnector.getCurrentPosition(userCalendar);
 					if(currentPositionTrackingResult != null) {
 						positions.put(userCalendar, currentPositionTrackingResult);
-					}
+					}*/
 					
 					// only start monitoring if calendar is tracked
 					if (!positions.containsKey(userCalendar))
@@ -190,7 +187,7 @@ public class MonitoringService {
 							}
 							
 							if (calcRouteTotal)
-								report.setRouteTotal(RoutingConnector.getRoute(appPositions));
+								report.setRouteTotal(routingConnector.getRoute(appPositions));
 						}
 						else
 							report.setRouteTotal(reportMap.get(userCalendar).getRouteTotal());
@@ -278,13 +275,13 @@ public class MonitoringService {
 						
 						if (doTimeCheck) {
 							// get route to next appointment
-							List<Double[]> routeNext = RoutingConnector.getGPSCoordinates(currentPosition, nextAppointment.getPosition());
+							List<Double[]> routeNext = routingConnector.getGPSCoordinates(currentPosition, nextAppointment.getPosition());
 							
 							if (routeNext != null && !routeNext.isEmpty()) {
 								report.setRouteNext(routeNext);
 								
 								// get travel time to next appointment from current time
-								int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
+								int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(routingConnector.
 										getTravelTime(currentPosition, nextAppointment.getPosition()));
 								
 								// compare estimated time of arrival with startTime of next appointment and set delay
