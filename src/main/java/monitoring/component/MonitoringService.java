@@ -351,11 +351,7 @@ public class MonitoringService {
 		
 		if (reportMap.containsKey(calendarId)) {
 			Report report = reportMap.get(calendarId);
-		
-			// TODO fix result for position
-			GeoPoint position = report.getPosition();
-			GeoPoint positionNew = new GeoPoint(position.getLongitude(), position.getLatitude());
-			obj.put("position", positionNew);
+			obj.put("position", report.getPosition());
 			obj.put("routeTotal", report.getRouteTotal());
 			obj.put("routeNext", report.getRouteNext());
 			obj.put("status", report.getStatus());
