@@ -1,5 +1,8 @@
 package monitoring.component;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -349,8 +352,15 @@ public class MonitoringService {
 	public JSONObject getReport(String calendarId) {
 		JSONObject obj = new JSONObject();
 		
-		if (reportMap.containsKey(calendarId)) {
-			Report report = reportMap.get(calendarId);
+		String calId = "";
+		try {
+			calId = URLDecoder.decode(URLEncoder.encode(calendarId,"UTF-8"),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			//
+		}
+		
+		if (reportMap.containsKey(calId)) {
+			Report report = reportMap.get(calId);
 			obj.put("position", report.getPosition());
 			obj.put("routeTotal", report.getRouteTotal());
 			obj.put("routeNext", report.getRouteNext());
