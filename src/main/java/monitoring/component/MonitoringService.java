@@ -27,6 +27,7 @@ import beans.GeoPoint;
 import extraction.AppointmentExtraction;
 import monitoring.model.Report;
 import rest.CalendarConnector;
+import rest.IDMConnector;
 import rest.RoutingConnector;
 import rest.TrackingConnector;
 import utility.MeasureConverter;
@@ -38,6 +39,7 @@ public class MonitoringService {
 	private final CalendarConnector calendarConnector;
  	private final RoutingConnector routingConnector;
  	private final TrackingConnector trackingConnector;
+ 	private final IDMConnector idmConnector;
  	
 	public ConcurrentHashMap<String,Report> reportMap;
 	
@@ -46,6 +48,7 @@ public class MonitoringService {
  		this.calendarConnector = new CalendarConnector();
  		this.routingConnector = new RoutingConnector();
  		this.trackingConnector = new TrackingConnector();
+ 		this.idmConnector = new IDMConnector();
 		reportMap = new ConcurrentHashMap<String,Report>();
 	}
 	
@@ -79,7 +82,11 @@ public class MonitoringService {
 			
 			for(String userCalendar: extractCalendarUsers) {
 				
-				GeoPoint currentPositionTrackingResult = trackingConnector.getCurrentPosition(userCalendar);
+				// get ID of tracking device from IDM
+				String deviceId = idmConnector.extractDeviceIdOfUser(userCalendar);
+				
+				// get current position of tracked device
+				GeoPoint currentPositionTrackingResult = trackingConnector.getCurrentPosition(deviceId);
 				if(currentPositionTrackingResult != null) {
 					positions.put(userCalendar, currentPositionTrackingResult);
 				}
