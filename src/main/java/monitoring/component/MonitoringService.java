@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -62,19 +61,7 @@ public class MonitoringService {
 			Date currentDate = new Date();
 			
 			// use point from TUD tracking service
-			HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
-			
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-			LocalTime midnight = LocalTime.MIDNIGHT;
-			LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
-			ZonedDateTime todayStart = ZonedDateTime.of(today, midnight, ZoneId.of("Europe/Berlin"));
-			String todayMidnight = todayStart.format(formatter);
-			String tomorrowMidnight = todayStart.plusDays(1).format(formatter);
-			
-			// construct time filter
-			StringBuilder timeFilter = new StringBuilder("")
-					.append("{\"begin\": \"").append(todayMidnight).append("\",")
-					.append("\"end\": \"").append(tomorrowMidnight).append("\"}");
+//			HashMap<String,GeoPoint> positions = new HashMap<String, GeoPoint>();
 			
 			// loop over users
 			JSONArray calendarUsers = calendarConnector.getCalendarUsers();
@@ -85,34 +72,60 @@ public class MonitoringService {
 				// get ID of tracking device from IDM
 				String deviceId = idmConnector.extractDeviceIdOfUser(userCalendar);
 				
-				// get current position of tracked device
-				GeoPoint currentPositionTrackingResult = trackingConnector.getCurrentPosition(deviceId);
-				if(currentPositionTrackingResult != null) {
-					positions.put(userCalendar, currentPositionTrackingResult);
+				// get current position of monitored user from Tracking Service
+				GeoPoint currentPosition = null;
+				try {
+					currentPosition = trackingConnector.getCurrentPosition(deviceId);
+				}
+				catch (Exception ex) {
+					//
 				}
 				
-				// only start monitoring if calendar is tracked
-				if (!positions.containsKey(userCalendar))
+				if (currentPosition == null) {
+					if (reportMap.containsKey(userCalendar))
+						// take last know position
+						currentPosition = reportMap.get(userCalendar).getPosition();
+					else
+						// take starting address of staff member
+						currentPosition = idmConnector.getGeoCoordinatesOfUser(userCalendar);
+				}
+				
+				// only start monitoring if we have a position
+				if(currentPosition == null)
 					continue;
 				
-				Report report = new Report();
+				// get appointments for the day 0:00 - 24:00
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+				LocalTime midnight = LocalTime.MIDNIGHT;
+				LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
+				ZonedDateTime todayStart = ZonedDateTime.of(today, midnight, ZoneId.of("Europe/Berlin"));
+				String todayMidnight = todayStart.format(formatter);
+				String tomorrowMidnight = todayStart.plusDays(1).format(formatter);
 				
-				// get current position of monitored user from Tracking Service
-				//GeoPoint currentPosition = TrackingConnector.getCurrentPosition(userCalendar);				
-				GeoPoint currentPosition = positions.get(userCalendar);
-				
-				CalendarAppointment nextAppointment = null;
-				GeoPoint calendarPosition = null;
-				boolean lastAppointment = false;
-				boolean doTimeCheck = true;
+				// construct time filter
+				StringBuilder timeFilter = new StringBuilder("")
+						.append("{\"begin\": \"").append(todayMidnight).append("\",")
+						.append("\"end\": \"").append(tomorrowMidnight).append("\"}");
 				
 				// get list of appointments of monitored user from Calendar Service
 				JSONArray appointmentsForCalendar = calendarConnector.getAppointmentsForCalendar(
 						userCalendar, timeFilter.toString());
 				
 				List<CalendarAppointment> appointments = extraction.extractAppointments(appointmentsForCalendar);
-//					List<CalendarAppointment> appointments = simAppointments.get(userCalendar);
+//				List<CalendarAppointment> appointments = simAppointments.get(userCalendar);
+				
 				int appointmentCount = appointments.size();
+				
+				// only start monitoring if we have appointments
+				if (appointmentCount == 0)
+					continue;
+				
+				// start with a new report
+				Report report = new Report();
+				CalendarAppointment nextAppointment = null;
+				GeoPoint calendarPosition = null;
+				boolean lastAppointment = false;
+				boolean doTimeCheck = true;
 				
 				// set total route for the day
 				if (appointmentCount > 1) {
@@ -268,69 +281,25 @@ public class MonitoringService {
 					reportMap.put(userCalendar, report);
 				}
 				else {
-					log.info("Could not resolve location from calendar! Monitoring will be stopped for ID: " + userCalendar);
-					if (reportMap.containsKey(userCalendar))
+					if (reportMap.containsKey(userCalendar)) {
+						log.info("Monitoring will be stopped for ID: " + userCalendar);
 						reportMap.remove(userCalendar);
-				}
-			}
-			/*
-			// map for all appointments of all calendars
-			
-			Map<String, List<CalendarAppointment>> appointmentsPerCalendar = Maps.newHashMap();
-			
-			// this set is necessary to avoid duplicate reminders
-			//Set<CalendarAppointment> reminderSetForSMS = Sets.newHashSet();
-			
-			// first: get calendars and observe the appointments
-			JSONArray calendarUsers = CalendarConnector.getCalendarUsers();
-			List<String> extractCalendarUsers = extraction.extractCalendarUsers(calendarUsers);
-			for(String userCalendar: extractCalendarUsers) {
-				JSONArray appointmentsForCalendar = CalendarConnector.getAppointmentsForCalendar(userCalendar);
-				List<CalendarAppointment> extractAppointments = extraction.extractAppointments(appointmentsForCalendar);
-				// sort the appointments for delay test
-				Collections.sort(extractAppointments);
-				appointmentsPerCalendar.put(userCalendar, extractAppointments);
-			}
-			
-			// second: check, if end date and start date is between current date
-			for(String userCalendar: extractCalendarUsers) {
-				
-				List<CalendarAppointment> appointments = appointmentsPerCalendar.get(userCalendar);
-				for(int index = 0; index <= appointments.size() - 2; index++) {
-					
-					CalendarAppointment firstAppointment = appointments.get(index);
-					CalendarAppointment secondAppointment = appointments.get(index + 1);
-					
-					// precondition, appointments are sorted correctly and there is time between the appointments
-					if(firstAppointment.getEndDate().before(currentDate) 
-							&& secondAppointment.getStartDate().after(currentDate)) {
-						
-						// extract the minutes to the next appointment
-						int minutesBetweenAppointments = MeasureConverter.
-								getTimeInMinutes((int) (secondAppointment.getStartDate().getTime() - currentDate.getTime()));
-						
-						// TODO extract the current location of the staff member
-						GeoPoint currentStaffPosition = new GeoPoint(51.05, 13.7333);
-						
-						// check the route to the next appointment
-						int minutesToNextAppointment = MeasureConverter.getTimeInMinutes(RoutingConnector.
-								getTravelTime(currentStaffPosition, secondAppointment.getPosition()));
-						
-						// check, if the staff can not reach the customer on time
-						if(minutesToNextAppointment > minutesBetweenAppointments 
-								&& !reminderSetForSMS.contains(secondAppointment)) {
-							// TODO remind the customer, when staff is too late
-							BroadcastingConnector.sendMessageToCustomer("sms", "12345", "Wir kommen später");
-							// save the appointment in reminder set
-							reminderSetForSMS.add(secondAppointment);
-						}
-						
-
 					}
-					
 				}
-				
+			}
+
+			
+
+			// check, if the staff can not reach the customer on time
+			/*
+			if(minutesToNextAppointment > minutesBetweenAppointments 
+					&& !reminderSetForSMS.contains(secondAppointment)) {
+				// TODO remind the customer, when staff is too late
+				BroadcastingConnector.sendMessageToCustomer("sms", "12345", "Wir kommen später");
+				// save the appointment in reminder set
+				reminderSetForSMS.add(secondAppointment);
 			}*/
+
 		
 		} catch(Exception e) {
 			log.error("API problems, let's try again");
