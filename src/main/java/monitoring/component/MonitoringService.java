@@ -95,12 +95,12 @@ public class MonitoringService {
 					continue;
 				
 				// get appointments for the day 0:00 - 24:00
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS+02:00");
 				LocalTime midnight = LocalTime.MIDNIGHT;
 				LocalDate today = LocalDate.now(ZoneId.of("Europe/Berlin"));
-				ZonedDateTime todayStart = ZonedDateTime.of(today, midnight, ZoneId.of("Europe/Berlin"));
-				String todayMidnight = todayStart.format(formatter);
-				String tomorrowMidnight = todayStart.plusDays(1).format(formatter);
+				ZonedDateTime todayStart = ZonedDateTime.of(today, midnight, ZoneId.of("GMT"));
+				String todayMidnight = todayStart.minusHours(2).format(formatter);
+				String tomorrowMidnight = todayStart.plusDays(1).minusHours(2).format(formatter);
 				
 				// construct time filter
 				StringBuilder timeFilter = new StringBuilder("")
