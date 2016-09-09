@@ -59,7 +59,7 @@ public class MonitoringService {
 	@Scheduled(fixedRate = 15000)
 	public void update() {
 		
-		Report report = new Report();
+		Report report = null;
 		
 		// get current time
 		Date currentDate = new Date();
@@ -73,17 +73,13 @@ public class MonitoringService {
 			List<CalendarAppointment> calendarAppointments = getCalendarAppointments(calendarUser);
 			
 			// only start monitoring if we have appointments
-			if (calendarAppointments.size() == 0)
-				continue;
-			else {
+			if (calendarAppointments.size() > 0) {
 				// get current position
 				GeoPoint currentPosition = getUserPosition(calendarUser);
 				
 				// only start monitoring if we have a position
-				if(currentPosition == null)
-					continue;
-				
-				report = createReport(calendarUser, calendarAppointments, currentPosition, currentDate);
+				if(currentPosition != null)
+					report = createReport(calendarUser, calendarAppointments, currentPosition, currentDate);
 			}
 		
 			// update reportMap
