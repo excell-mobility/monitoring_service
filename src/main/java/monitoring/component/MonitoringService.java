@@ -64,8 +64,6 @@ public class MonitoringService {
 		// get current time
 		Date currentDate = new Date();
 		
-		log.debug("Last Update: " + currentDate);
-		
 		// get users
 		List<String> calendarUsers = getCalendarUsers();
 		
@@ -177,7 +175,8 @@ public class MonitoringService {
 		// construct time filter
 		StringBuilder timeFilter = new StringBuilder("")
 				.append("{\"begin\": \"").append(todayMidnight).append("\",")
-				.append("\"end\": \"").append(tomorrowMidnight).append("\"}");
+				.append("\"end\": \"").append(tomorrowMidnight).append("\",")
+				.append("\"completed\": false}");
 		
 		try {
 			// get list of appointments of monitored user from Calendar Service
@@ -197,42 +196,13 @@ public class MonitoringService {
 			List<CalendarAppointment> appointments,
 			GeoPoint currentPosition,
 			Date currentDate) {
-				
-		// start with a new report
-		Report report = null;
-		CalendarAppointment nextAppointment = null;
-		GeoPoint calendarPosition = null;
-		boolean lastAppointment = false;
-		boolean doTimeCheck = true;
 		
-		int appointmentCount = appointments.size();
-			
-		// find matching appointment for current time
-		for(int index = 0; index < appointmentCount; index++) {
-			nextAppointment = appointments.get(index);					
-			
-			// if appointment lies already completely in the past, continue with next one
-			if (nextAppointment.getEndDate().before(currentDate))
-				continue;
-			
-			// appointment is going to happen or happening right now
-			// get position of this appointment
-			calendarPosition = nextAppointment.getPosition();
-			
-			// check if currentDate is before firstAppointment
-			if (nextAppointment.getStartDate().after(currentDate))
-				break;
-			else {
-				// currentDate is during firstAppointment							
-				// check for next appointment in order to get the route, estimatedTimeOfArrival and delay
-				if (index < appointmentCount-1)
-					// get next appointment to compare
-					nextAppointment = appointments.get(index + 1);
-				else
-					// no more appointments left
-					lastAppointment = true;
-			}
-		}
+		Report report = null;
+		boolean skipTimeCheck = false;
+		
+		// first appointment in the list is set as next appointment
+		CalendarAppointment nextAppointment = appointments.get(0);
+		GeoPoint calendarPosition = nextAppointment.getPosition();
 		
 		// check if calendar position is set, otherwise monitoring can not be applied
 		if (calendarPosition != null) {
@@ -241,7 +211,7 @@ public class MonitoringService {
 			report = new Report();
 			
 			// set total route for the day
-			if (appointmentCount > 1) {
+			if (appointments.size() > 1) {
 				if (!reportMap.containsKey(calendarUser)) {
 					report.setRouteTotal(getRouteTotal(appointments));
 				}
@@ -281,8 +251,8 @@ public class MonitoringService {
 						report.setStatus(Report.WorkStatus.AT_APPOINTMENT);
 						
 						// if it's the last appointment stop time check
-						if (lastAppointment)
-							doTimeCheck = false;
+						if (appointments.size() == 1)
+							skipTimeCheck = true;
 					}
 					else {
 						//sensor is not moving but also > 500 away from appointment
@@ -299,7 +269,7 @@ public class MonitoringService {
 			
 			// SET ROUTE AND TIME STATUS
 			
-			if (doTimeCheck) {
+			if (!skipTimeCheck) {
 				// get route to next appointment
 				List<Double[]> routeNext = getRouteNext(currentPosition, nextAppointment.getPosition());
 				
