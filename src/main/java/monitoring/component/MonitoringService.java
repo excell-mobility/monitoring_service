@@ -2,6 +2,7 @@ package monitoring.component;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -27,7 +28,6 @@ import com.google.common.collect.Lists;
 
 import beans.CalendarAppointment;
 import beans.GeoPoint;
-import exceptions.ConnectionException;
 import extraction.AppointmentExtraction;
 import monitoring.model.Report;
 import rest.CalendarConnector;
@@ -137,7 +137,7 @@ public class MonitoringService {
 					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
 			}
 		}
-		catch (ConnectionException cEx) {
+		catch (ConnectException cEx) {
 			//
 		}
 		
