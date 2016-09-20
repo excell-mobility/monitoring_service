@@ -12,8 +12,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONArray;
@@ -24,17 +24,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
-
-import beans.CalendarAppointment;
-import beans.GeoPoint;
-import extraction.AppointmentExtraction;
-import monitoring.model.Report;
 import rest.CalendarConnector;
 import rest.IDMConnector;
 import rest.RoutingConnector;
 import rest.TrackingConnector;
 import utility.MeasureConverter;
+import beans.CalendarAppointment;
+import beans.GeoPoint;
+import beans.Report;
+
+import com.google.common.collect.Lists;
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.ClientNetworkConfig;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+
+import extraction.AppointmentExtraction;
 
 @Component
 public class MonitoringService {
@@ -44,8 +50,12 @@ public class MonitoringService {
  	private final RoutingConnector routingConnector;
  	private final TrackingConnector trackingConnector;
  	private final IDMConnector idmConnector;
+ 	private ClientConfig clientConfig;
+ 	private ClientNetworkConfig networkConfig;
+ 	private List<String> addresses;
+ 	private HazelcastInstance client;
  	
-	public ConcurrentHashMap<String,Report> reportMap;
+	public IMap reportMap;
 	
 	public MonitoringService() {
  		this.log = LoggerFactory.getLogger(this.getClass());
@@ -53,13 +63,21 @@ public class MonitoringService {
  		this.routingConnector = new RoutingConnector();
  		this.trackingConnector = new TrackingConnector();
  		this.idmConnector = new IDMConnector();
-		reportMap = new ConcurrentHashMap<String,Report>();
+ 		// hazelcast configuration
+	    clientConfig = new ClientConfig();
+	    networkConfig = new ClientNetworkConfig();
+	    addresses = new LinkedList<String>();
+	    addresses.add("141.64.5.201:5701");
+	    addresses.add("141.64.5.202:5701");
+	    addresses.add("141.64.5.203:5701");
+	    networkConfig.setAddresses(addresses);
+	    clientConfig.setNetworkConfig(networkConfig);
+	    client = HazelcastClient.newHazelcastClient( clientConfig );
+	    reportMap = client.getMap( "reportMap" );
 	}
 	
 	@Scheduled(fixedRate = 15000)
 	public void update() {
-		
-		Report report = null;
 		
 		// get current time
 		Date currentDate = new Date();
@@ -68,7 +86,10 @@ public class MonitoringService {
 		List<String> calendarUsers = getCalendarUsers();
 		
 		// loop over all users
-		for(String calendarUser: calendarUsers) {			
+		for(String calendarUser: calendarUsers) {	
+			// set up report to null to avoid duplicate entries
+			Report report = null;
+			
 			// get appointments of user
 			List<CalendarAppointment> calendarAppointments = getCalendarAppointments(calendarUser);
 			
@@ -88,8 +109,9 @@ public class MonitoringService {
 			else
 				if (reportMap.containsKey(calendarUser)) {
 					log.info("Monitoring will be stopped for ID: " + calendarUser);
-					reportMap.remove(calendarUser);
+					reportMap.delete(calendarUser);
 				}
+			
 		}
 	}
 	
@@ -125,7 +147,7 @@ public class MonitoringService {
 			if (currentPosition == null) {
 				if (reportMap.containsKey(calendarUser))
 					// take last know position
-					currentPosition = reportMap.get(calendarUser).getPosition();
+					currentPosition = ((Report) reportMap.get(calendarUser)).getPosition();
 				else
 					// take starting address of staff member
 					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
@@ -212,14 +234,14 @@ public class MonitoringService {
 					report.setRouteTotal(getRouteTotal(appointments));
 				}
 				else
-					report.setRouteTotal(reportMap.get(calendarUser).getRouteTotal());
+					report.setRouteTotal(((Report) reportMap.get(calendarUser)).getRouteTotal());
 			}
 			
 			double posDistance;
 				
 			// get distance to last known position
 			if (reportMap.containsKey(calendarUser)) {
-				posDistance = getDistance(reportMap.get(calendarUser).getPosition(), currentPosition);
+				posDistance = getDistance(( (Report) reportMap.get(calendarUser)).getPosition(), currentPosition);
 			}
 			else
 				posDistance = 0.0;
@@ -231,8 +253,8 @@ public class MonitoringService {
 				// if not and if previous state has been AT_APPOINTMENT
 				// it can be considered that status remains the same
 				if (reportMap.containsKey(calendarUser))
-					if (reportMap.get(calendarUser).getStatus() == Report.WorkStatus.AT_APPOINTMENT) {
-						report.setPosition(reportMap.get(calendarUser).getPosition());
+					if (( (Report)reportMap.get(calendarUser)).getStatus() == Report.WorkStatus.AT_APPOINTMENT) {
+						report.setPosition(( (Report) reportMap.get(calendarUser)).getPosition());
 						report.setStatus(Report.WorkStatus.AT_APPOINTMENT);
 					}
 					
@@ -303,7 +325,7 @@ public class MonitoringService {
 			}
 			else {
 				if (reportMap.containsKey(calendarUser)) {
-					Report lastReport = reportMap.get(calendarUser);
+					Report lastReport = (Report) reportMap.get(calendarUser);
 					report.setRouteNext(lastReport.getRouteNext());
 					report.setTimeStatus(lastReport.getTimeStatus());
 					report.setExpectedTimeOfArrival(lastReport.getExpectedTimeOfArrival());
@@ -401,7 +423,7 @@ public class MonitoringService {
 		}
 		
 		if (reportMap.containsKey(calId)) {
-			Report report = reportMap.get(calId);
+			Report report = (Report) reportMap.get(calId);
 			obj.put("position", report.getPosition());
 			obj.put("routeTotal", report.getRouteTotal());
 			obj.put("routeNext", report.getRouteNext());
