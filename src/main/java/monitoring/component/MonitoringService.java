@@ -57,9 +57,7 @@ public class MonitoringService {
 	
 	@Scheduled(fixedRate = 15000)
 	public void update() {
-		
-		Report report = null;
-		
+				
 		// get current time
 		Date currentDate = new Date();
 		
@@ -68,6 +66,9 @@ public class MonitoringService {
 		
 		// loop over all users
 		for(String calendarUser: calendarUsers) {			
+			
+			Report report = null;
+			
 			// get appointments of user
 			List<CalendarAppointment> calendarAppointments = getCalendarAppointments(calendarUser);
 			
@@ -129,8 +130,11 @@ public class MonitoringService {
 				// take last know position
 				currentPosition = reportMap.get(calendarUser).getPosition();
 			else
-				// take starting address of staff member
-				currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
+				try {
+					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
+				} catch (IOException e) {
+					//
+				}
 		}
 		
 		return currentPosition;
