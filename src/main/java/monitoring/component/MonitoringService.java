@@ -130,11 +130,7 @@ public class MonitoringService {
 				// take last know position
 				currentPosition = reportMap.get(calendarUser).getPosition();
 			else
-				try {
-					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
-				} catch (IOException e) {
-					//
-				}
+				currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
 		}
 		
 		return currentPosition;
