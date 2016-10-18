@@ -2,7 +2,6 @@ package monitoring.component;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -120,8 +119,6 @@ public class MonitoringService {
 		// get ID of tracking device from IDM
 		try {
 			deviceId = idmConnector.extractDeviceIdOfUser(calendarUser);
-		} catch (MalformedURLException urlEx) {
-			urlEx.printStackTrace();
 		} catch (IOException ioEx) {
 			ioEx.printStackTrace();
 		}
