@@ -2,7 +2,7 @@ package monitoring.component;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -117,22 +117,23 @@ public class MonitoringService {
 		String deviceId = null;
 		GeoPoint currentPosition = null;
 		
+		// get ID of tracking device from IDM
 		try {
-			// get ID of tracking device from IDM
 			deviceId = idmConnector.extractDeviceIdOfUser(calendarUser);
-			currentPosition = getTrackingPosition(deviceId);
-		
-			if (currentPosition == null) {
-				if (reportMap.containsKey(calendarUser))
-					// take last know position
-					currentPosition = reportMap.get(calendarUser).getPosition();
-				else
-					// take starting address of staff member
-					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
-			}
+		} catch (MalformedURLException urlEx) {
+			urlEx.printStackTrace();
+		} catch (IOException ioEx) {
+			ioEx.printStackTrace();
 		}
-		catch (ConnectException cEx) {
-			//
+		currentPosition = getTrackingPosition(deviceId);
+
+		if (currentPosition == null) {
+			if (reportMap.containsKey(calendarUser))
+				// take last know position
+				currentPosition = reportMap.get(calendarUser).getPosition();
+			else
+				// take starting address of staff member
+				currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
 		}
 		
 		return currentPosition;
