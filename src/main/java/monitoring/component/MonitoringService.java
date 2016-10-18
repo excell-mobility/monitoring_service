@@ -121,7 +121,7 @@ public class MonitoringService {
 		try {
 			deviceId = idmConnector.extractDeviceIdOfUser(calendarUser);
 		} catch (IOException ioEx) {
-			ioEx.printStackTrace();
+			//ioEx.printStackTrace();
 		}
 		currentPosition = getTrackingPosition(deviceId);
 
