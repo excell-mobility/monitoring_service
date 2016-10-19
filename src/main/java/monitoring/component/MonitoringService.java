@@ -2,7 +2,6 @@ package monitoring.component;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -87,6 +86,7 @@ public class MonitoringService {
 		
 		// loop over all users
 		for(String calendarUser: calendarUsers) {	
+			
 			// set up report to null to avoid duplicate entries
 			Report report = null;
 			
@@ -135,29 +135,28 @@ public class MonitoringService {
 
 	
 	private GeoPoint getUserPosition(String calendarUser) {
-		
+
 		String deviceId = null;
 		GeoPoint currentPosition = null;
 		
+		// get ID of tracking device from IDM
 		try {
-			// get ID of tracking device from IDM
 			deviceId = idmConnector.extractDeviceIdOfUser(calendarUser);
-			currentPosition = getTrackingPosition(deviceId);
-		
-			if (currentPosition == null) {
-				if (reportMap.containsKey(calendarUser))
-					// take last know position
-					currentPosition = ((Report) reportMap.get(calendarUser)).getPosition();
-				else
-					// take starting address of staff member
-					currentPosition = idmConnector.getGeoCoordinatesOfUser(calendarUser);
-			}
+		} catch (IOException ioEx) {
+			//ioEx.printStackTrace();
 		}
-		catch (ConnectException cEx) {
-			//
+		currentPosition = getTrackingPosition(deviceId);
+
+		if (currentPosition == null) {
+			if (reportMap.containsKey(calendarUser))
+				// take last know position
+				currentPosition = ((Report) reportMap.get(calendarUser)).getPosition();
+			else
+				currentPosition = idmConnector.getGeoCoordByUserId(calendarUser);
 		}
 		
 		return currentPosition;
+		
 	}
 	
 	
