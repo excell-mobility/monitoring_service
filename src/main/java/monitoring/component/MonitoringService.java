@@ -54,7 +54,7 @@ public class MonitoringService {
  	private List<String> addresses;
  	private HazelcastInstance client;
  	
-	public IMap reportMap;
+	public IMap<String,Report> reportMap;
 	
 	public MonitoringService() {
  		this.log = LoggerFactory.getLogger(this.getClass());
@@ -66,6 +66,7 @@ public class MonitoringService {
 	    clientConfig = new ClientConfig();
 	    networkConfig = new ClientNetworkConfig();
 	    addresses = new LinkedList<String>();
+//	    addresses.add("127.0.0.1:5701");
 	    addresses.add("141.64.5.201:5701");
 	    addresses.add("141.64.5.202:5701");
 	    addresses.add("141.64.5.203:5701");
