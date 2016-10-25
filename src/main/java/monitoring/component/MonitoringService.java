@@ -27,6 +27,7 @@ import rest.CalendarConnector;
 import rest.IDMConnector;
 import rest.RoutingConnector;
 import rest.TrackingConnector;
+import utility.DistanceCalculator;
 import utility.MeasureConverter;
 import beans.CalendarAppointment;
 import beans.GeoPoint;
@@ -241,10 +242,11 @@ public class MonitoringService {
 				
 			// get distance to last known position
 			if (reportMap.containsKey(calendarUser)) {
-				posDistance = getDistance(( (Report) reportMap.get(calendarUser)).getPosition(), currentPosition);
+				posDistance = DistanceCalculator.getDistance(( (Report) reportMap.get(calendarUser)).getPosition(), currentPosition);
 			}
-			else
+			else { 
 				posDistance = 0.0;
+			}
 			
 			// SET POSITION AND WORK STATUS
 			
@@ -261,7 +263,7 @@ public class MonitoringService {
 				// check status if it is not set
 				if (report.getStatus() == null) {
 					// check if currentPosition is also near to location of appointment
-					posDistance = getDistance(currentPosition, calendarPosition);
+					posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
 				
 					if (posDistance < 500) {
 						// sensor is not moving and near appointment
@@ -393,23 +395,7 @@ public class MonitoringService {
 		}
 		
 		return minutesToNextAppointment;
-	}
-	
-	
-	private double getDistance(GeoPoint pointA, GeoPoint pointB) {
-		double lonDelta = pointA.getLongitude() - pointB.getLongitude();
-		double posDistance = (
-				Math.acos(
-				Math.sin(pointA.getLatitude() * Math.PI / 180.0) * 
-				Math.sin(pointB.getLatitude() * Math.PI / 180.0) + 
-				Math.cos(pointA.getLatitude() * Math.PI / 180.0) * 
-				Math.cos(pointB.getLatitude() * Math.PI / 180.0) * 
-				Math.cos(lonDelta * Math.PI / 180.0)) * 180 / Math.PI) * 
-				60 * 1.1515 * 1609.344;
-		
-		return posDistance;
 	}	
-	
 	
 	@SuppressWarnings("unchecked")
 	public JSONObject getReport(String calendarId) {
