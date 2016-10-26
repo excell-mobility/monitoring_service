@@ -27,11 +27,13 @@ import rest.CalendarConnector;
 import rest.IDMConnector;
 import rest.RoutingConnector;
 import rest.TrackingConnector;
+import utility.DateAnalyser;
 import utility.DistanceCalculator;
 import utility.MeasureConverter;
 import beans.CalendarAppointment;
 import beans.GeoPoint;
 import beans.Report;
+import beans.WorkingStatus;
 
 import com.google.common.collect.Lists;
 import com.hazelcast.client.HazelcastClient;
@@ -75,6 +77,7 @@ public class MonitoringService {
 	    clientConfig.setNetworkConfig(networkConfig);
 	    client = HazelcastClient.newHazelcastClient( clientConfig );
 	    reportMap = client.getMap( "reportMap" );
+	    reportMap.clear();
 	}
 	
 	@Scheduled(fixedRate = 15000)
@@ -238,9 +241,11 @@ public class MonitoringService {
 					report.setRouteTotal(((Report) reportMap.get(calendarUser)).getRouteTotal());
 			}
 			
-			double posDistance;
-				
+			// variable for time status
+			int appointmentDuration = 0;
+							
 			// get distance to last known position
+			double posDistance;
 			if (reportMap.containsKey(calendarUser)) {
 				posDistance = DistanceCalculator.getDistance(( (Report) reportMap.get(calendarUser)).getPosition(), currentPosition);
 			}
@@ -250,41 +255,71 @@ public class MonitoringService {
 			
 			// SET POSITION AND WORK STATUS
 			
+			WorkingStatus workingStatus = new WorkingStatus();
+			
 			// check if position has changed
 			if (posDistance < 100) {
 				// if not and if previous state has been AT_APPOINTMENT
 				// it can be considered that status remains the same
-				if (reportMap.containsKey(calendarUser))
-					if (( (Report)reportMap.get(calendarUser)).getStatus() == Report.WorkStatus.AT_APPOINTMENT) {
-						report.setPosition(( (Report) reportMap.get(calendarUser)).getPosition());
-						report.setStatus(Report.WorkStatus.AT_APPOINTMENT);
+				if (reportMap.containsKey(calendarUser)) {
+					if (((Report)reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT) {
+						report.setPosition(((Report) reportMap.get(calendarUser)).getPosition());
+						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
+						workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
+						report.setWorkingStatus(workingStatus);
+						
+						// reduce duration of appointment (total duration minus time already passed at appointment)
+						appointmentDuration = 
+								DateAnalyser.getDurationBetweenDates(
+										nextAppointment.getStartDate(), nextAppointment.getEndDate()
+								) -
+								DateAnalyser.getDurationBetweenDates(
+										workingStatus.getSince(), new Date()
+								);
 					}
+					else {
+						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+						workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
+					}
+				}						
 					
 				// check status if it is not set
-				if (report.getStatus() == null) {
+				if (report.getWorkingStatus() == null) {
 					// check if currentPosition is also near to location of appointment
 					posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
 				
 					if (posDistance < 500) {
 						// sensor is not moving and near appointment
 						report.setPosition(calendarPosition);
-						report.setStatus(Report.WorkStatus.AT_APPOINTMENT);
-						
+						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
+						report.setWorkingStatus(workingStatus);
+												
 						// if it's the last appointment stop time check
 						if (appointments.size() == 1)
 							skipTimeCheck = true;
+						else {
+							// calculate the duration of appointment
+							appointmentDuration = DateAnalyser.getDurationBetweenDates(
+									nextAppointment.getStartDate(),nextAppointment.getEndDate()
+									);
+							
+							// update nextAppointment to generate a new time status
+							nextAppointment = appointments.get(1);
+						}
 					}
 					else {
 						//sensor is not moving but also > 500 away from appointment
 						report.setPosition(currentPosition);
-						report.setStatus(Report.WorkStatus.ON_THE_MOVE);
+						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+						report.setWorkingStatus(workingStatus);
 					}
 				}
 			}
 			else {
 				// sensor position has changed >100m; consider this as ON_THE_MOVE
 				report.setPosition(currentPosition);
-				report.setStatus(Report.WorkStatus.ON_THE_MOVE);
+				workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+				report.setWorkingStatus(workingStatus);
 			}
 			
 			// SET ROUTE AND TIME STATUS
@@ -302,6 +337,7 @@ public class MonitoringService {
 					// compare estimated time of arrival with startTime of next appointment and set delay
 					Calendar calendar = Calendar.getInstance();
 					calendar.setTime(currentDate);
+					calendar.add(Calendar.MINUTE, appointmentDuration);
 					calendar.add(Calendar.MINUTE, minutesToNextAppointment);
 					Date expectedTimeOfArrival = calendar.getTime();
 					
@@ -410,10 +446,15 @@ public class MonitoringService {
 		
 		if (reportMap.containsKey(calId)) {
 			Report report = (Report) reportMap.get(calId);
+			
+			JSONObject workingStatus = new JSONObject();
+			workingStatus.put("locationStatus", report.getWorkingStatus().getLocationStatus());
+			workingStatus.put("since", report.getWorkingStatus().getSince());
+			
 			obj.put("position", report.getPosition());
 			obj.put("routeTotal", report.getRouteTotal());
 			obj.put("routeNext", report.getRouteNext());
-			obj.put("status", report.getStatus());
+			obj.put("workingStatus", workingStatus);
 			obj.put("timeStatus", report.getTimeStatus());
 			obj.put("expectedTimeOfArrival", report.getExpectedTimeOfArrival());
 			obj.put("delayInMin", report.getDelayInMin());
