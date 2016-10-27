@@ -314,7 +314,8 @@ public class MonitoringService {
 					calendar.add(Calendar.MINUTE, getRouteTravelTime(currentPosition, nextAppointment.getPosition()));
 					
 					// add duration of current appointment
-					if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT)
+					if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT &&
+							appointmentDuration > 0)
 						calendar.add(Calendar.MINUTE, appointmentDuration);
 					
 					// set estimated time of arrival
