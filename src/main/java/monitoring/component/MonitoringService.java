@@ -255,6 +255,7 @@ public class MonitoringService {
 			
 			// SET POSITION AND WORK STATUS
 			
+			report.setPosition(currentPosition);
 			WorkingStatus workingStatus = new WorkingStatus();
 			
 			// check if position has changed
@@ -290,7 +291,6 @@ public class MonitoringService {
 				
 					if (posDistance < 500) {
 						// sensor is not moving and near appointment
-						report.setPosition(calendarPosition);
 						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
 						report.setWorkingStatus(workingStatus);
 												
@@ -309,7 +309,6 @@ public class MonitoringService {
 					}
 					else {
 						//sensor is not moving but also > 500 away from appointment
-						report.setPosition(currentPosition);
 						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
 						report.setWorkingStatus(workingStatus);
 					}
@@ -317,7 +316,6 @@ public class MonitoringService {
 			}
 			else {
 				// sensor position has changed >100m; consider this as ON_THE_MOVE
-				report.setPosition(currentPosition);
 				workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
 				report.setWorkingStatus(workingStatus);
 			}
