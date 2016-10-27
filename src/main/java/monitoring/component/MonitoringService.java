@@ -220,7 +220,7 @@ public class MonitoringService {
 			Date currentDate) {
 		
 		Report report = null;
-		boolean skipNext = false;
+		boolean atLastAppointment = false;
 		
 		// first appointment in the list is set as next appointment
 		CalendarAppointment nextAppointment = appointments.get(0);
@@ -274,38 +274,39 @@ public class MonitoringService {
 				posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
 				
 				// is sensor near to the next appointment?
-				if (posDistance < 500) {
+				if (posDistance < 500)
 					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
-					
-					// reduce duration of appointment (total duration minus time already passed at appointment)
-					appointmentDuration = 
-							DateAnalyser.getDurationBetweenDates(
-									nextAppointment.getStartDate(), nextAppointment.getEndDate()
-							) -
-							DateAnalyser.getDurationBetweenDates(
-									workingStatus.getSince(), new Date()
-							);
-					
-					// update nextAppointment to look at the following appointment (route, arrival, delay)
-					if (appointments.size() == 1)
-						skipNext = true;
-					else
-						nextAppointment = appointments.get(1);
-				}
 			}
-			
-			report.setWorkingStatus(workingStatus);
-			
+					
 			// reset "since" if status has changed
 			if (reportMap.containsKey(calendarUser))
 				if (((Report) reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() != workingStatus.getLocationStatus())
 					workingStatus.setSince(new Date());
 			
+			// if status is AT_APPOINTMENT, some extra settings are necessary
+			if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT) {
+				// reduce duration of appointment (total duration minus time already passed at appointment)
+				appointmentDuration = 
+						DateAnalyser.getDurationBetweenDates(
+								nextAppointment.getStartDate(), nextAppointment.getEndDate()
+						) -
+						DateAnalyser.getDurationBetweenDates(
+								workingStatus.getSince(), new Date()
+						);
+				
+				// update nextAppointment to look at the following appointment (route, arrival, delay)
+				if (appointments.size() == 1)
+					atLastAppointment = true;
+				else
+					nextAppointment = appointments.get(1);
+			}
+			
+			report.setWorkingStatus(workingStatus);
+			
+			
 			// SET TIME STATUS
 			
-			// get route and expectedTimeOfArrival for next appointment
-			
-			if (!skipNext) {
+			if (!atLastAppointment) {
 				// get route to next appointment
 				List<Double[]> routeNext = getRouteNext(currentPosition, nextAppointment.getPosition());
 				
@@ -331,7 +332,7 @@ public class MonitoringService {
 				}
 			}
 			else
-				// at last appointment so only compare real start date and planned start date to calculate delay
+				// only compare real start date and planned start date of last appointment
 				calculateDelay(report, workingStatus.getSince(), nextAppointment.getStartDate());
 		}
 		
