@@ -220,7 +220,7 @@ public class MonitoringService {
 			Date currentDate) {
 		
 		Report report = null;
-		boolean skipTimeCheck = false;
+		boolean skipNext = false;
 		
 		// first appointment in the list is set as next appointment
 		CalendarAppointment nextAppointment = appointments.get(0);
@@ -243,7 +243,7 @@ public class MonitoringService {
 			
 			// variable for time status
 			int appointmentDuration = 0;
-							
+			
 			// get distance to last known position
 			double posDistance;
 			if (reportMap.containsKey(calendarUser)) {
@@ -253,121 +253,80 @@ public class MonitoringService {
 				posDistance = 0.0;
 			}
 			
-			// SET POSITION AND WORK STATUS
+			// SET WORK STATUS
 			
 			report.setPosition(currentPosition);
 			WorkingStatus workingStatus = new WorkingStatus();
 			
-			// check if position has changed
+			// set working status to ON_THE_MOVE by default
+			workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+			
+			// check if there is a previous state and since when
+			if (reportMap.containsKey(calendarUser))
+				workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
+			else
+				workingStatus.setSince(new Date());
+			
+			// check if position has not changed greatly
 			if (posDistance < 100) {
-				// if not and if previous state has been AT_APPOINTMENT
-				// it can be considered that status remains the same
-				if (reportMap.containsKey(calendarUser)) {
-					if (((Report)reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT) {
-						report.setPosition(((Report) reportMap.get(calendarUser)).getPosition());
-						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
-						workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
-						report.setWorkingStatus(workingStatus);
-						
-						// reduce duration of appointment (total duration minus time already passed at appointment)
-						appointmentDuration = 
-								DateAnalyser.getDurationBetweenDates(
-										nextAppointment.getStartDate(), nextAppointment.getEndDate()
-								) -
-								DateAnalyser.getDurationBetweenDates(
-										workingStatus.getSince(), new Date()
-								);
-					}
-					else {
-						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
-						workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
-					}
-				}						
-					
-				// check status if it is not set
-				if (report.getWorkingStatus() == null) {
-					// check if currentPosition is also near to location of appointment
-					posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
 				
-					if (posDistance < 500) {
-						// sensor is not moving and near appointment
-						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
-						report.setWorkingStatus(workingStatus);
-												
-						// if it's the last appointment stop time check
-						if (appointments.size() == 1)
-							skipTimeCheck = true;
-						else {
-							// calculate the duration of appointment
-							appointmentDuration = DateAnalyser.getDurationBetweenDates(
-									nextAppointment.getStartDate(),nextAppointment.getEndDate()
-									);
-							
-							// update nextAppointment to generate a new time status
-							nextAppointment = appointments.get(1);
-						}
-					}
-					else {
-						//sensor is not moving but also > 500 away from appointment
-						workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
-						report.setWorkingStatus(workingStatus);
-					}
+				// check if currentPosition is also near to location of appointment
+				posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
+				
+				// is sensor near to the next appointment?
+				if (posDistance < 500) {
+					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
+				
+					// reduce duration of appointment (total duration minus time already passed at appointment)
+					appointmentDuration = 
+							DateAnalyser.getDurationBetweenDates(
+									nextAppointment.getStartDate(), nextAppointment.getEndDate()
+							) -
+							DateAnalyser.getDurationBetweenDates(
+									workingStatus.getSince(), new Date()
+							);
+					
+					// update nextAppointment to look at the following appointment (route, arrival, delay)
+					if (appointments.size() == 1)
+						skipNext = true;
+					else
+						nextAppointment = appointments.get(1);
 				}
 			}
-			else {
-				// sensor position has changed >100m; consider this as ON_THE_MOVE
-				workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
-				report.setWorkingStatus(workingStatus);
-			}
 			
-			// SET ROUTE AND TIME STATUS
+			report.setWorkingStatus(workingStatus);
 			
-			if (!skipTimeCheck) {
+			// SET TIME STATUS
+			
+			// get route and expectedTimeOfArrival for next appointment
+			
+			if (!skipNext) {
 				// get route to next appointment
 				List<Double[]> routeNext = getRouteNext(currentPosition, nextAppointment.getPosition());
 				
 				if (routeNext != null && !routeNext.isEmpty()) {
 					report.setRouteNext(routeNext);
 					
-					// get travel time to next appointment from current time
-					int minutesToNextAppointment = getRouteTravelTime(currentPosition, nextAppointment.getPosition());
-					
-					// compare estimated time of arrival with startTime of next appointment and set delay
 					Calendar calendar = Calendar.getInstance();
 					calendar.setTime(currentDate);
-					calendar.add(Calendar.MINUTE, appointmentDuration);
-					calendar.add(Calendar.MINUTE, minutesToNextAppointment);
-					Date expectedTimeOfArrival = calendar.getTime();
 					
-					if (expectedTimeOfArrival.before(nextAppointment.getStartDate())) {
-						report.setTimeStatus(Report.TimeStatus.IN_TIME);
-						report.setExpectedTimeOfArrival(nextAppointment.getStartDate());
-						report.setDelayInMin(0);
-					}
-					else {
-						report.setExpectedTimeOfArrival(expectedTimeOfArrival);
-						Long delay = TimeUnit.MILLISECONDS.toMinutes(
-								expectedTimeOfArrival.getTime() - nextAppointment.getStartDate().getTime());
-						// always add 1 minute (rounding up the seconds)
-						// only set time status to DELAYED if delay is greater than 10 min
-						if (delay.intValue() + 1 >= 10)
-							report.setTimeStatus(Report.TimeStatus.DELAYED);
-						else
-							report.setTimeStatus(Report.TimeStatus.IN_TIME);
-						
-						report.setDelayInMin(delay.intValue() + 1);
-					}
+					// get travel time to next appointment from current position and add it up to time estimation
+					calendar.add(Calendar.MINUTE, getRouteTravelTime(currentPosition, nextAppointment.getPosition()));
+					
+					// add duration of current appointment
+					if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT)
+						calendar.add(Calendar.MINUTE, appointmentDuration);
+					
+					// set estimated time of arrival
+					report.setExpectedTimeOfArrival(calendar.getTime());
+					
+					// calculate delay
+					calculateDelay(report, report.getExpectedTimeOfArrival(), nextAppointment.getStartDate());
 				}
 			}
-			else {
-				if (reportMap.containsKey(calendarUser)) {
-					Report lastReport = (Report) reportMap.get(calendarUser);
-					report.setRouteNext(lastReport.getRouteNext());
-					report.setTimeStatus(lastReport.getTimeStatus());
-					report.setExpectedTimeOfArrival(lastReport.getExpectedTimeOfArrival());
-					report.setDelayInMin(lastReport.getDelayInMin());
-				}
-			}
+			else
+				// at last appointment so only compare real start date and planned start date to calculate delay
+				calculateDelay(report, workingStatus.getSince(), nextAppointment.getStartDate());
 		}
 		
 		return report;
@@ -429,7 +388,26 @@ public class MonitoringService {
 		}
 		
 		return minutesToNextAppointment;
-	}	
+	}
+	
+	private void calculateDelay(Report report, Date is, Date should) {
+		if (is.before(should)) {
+			report.setTimeStatus(Report.TimeStatus.IN_TIME);
+			report.setDelayInMin(0);
+		}
+		else {
+			Long delay = TimeUnit.MILLISECONDS.toMinutes(is.getTime() - should.getTime());
+			
+			// always add 1 minute (rounding up the seconds)
+			// only set time status to DELAYED if delay is greater than 5 min
+			if (delay.intValue() + 1 >= 5)
+				report.setTimeStatus(Report.TimeStatus.DELAYED);
+			else
+				report.setTimeStatus(Report.TimeStatus.IN_TIME);
+			
+			report.setDelayInMin(delay.intValue() + 1);
+		}
+	}
 	
 	@SuppressWarnings("unchecked")
 	public JSONObject getReport(String calendarId) {
