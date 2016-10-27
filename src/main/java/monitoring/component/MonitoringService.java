@@ -276,7 +276,7 @@ public class MonitoringService {
 				// is sensor near to the next appointment?
 				if (posDistance < 500) {
 					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
-				
+					
 					// reduce duration of appointment (total duration minus time already passed at appointment)
 					appointmentDuration = 
 							DateAnalyser.getDurationBetweenDates(
@@ -295,6 +295,11 @@ public class MonitoringService {
 			}
 			
 			report.setWorkingStatus(workingStatus);
+			
+			// reset "since" if status has changed
+			if (reportMap.containsKey(calendarUser))
+				if (((Report) reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() != workingStatus.getLocationStatus())
+					workingStatus.setSince(new Date());
 			
 			// SET TIME STATUS
 			
