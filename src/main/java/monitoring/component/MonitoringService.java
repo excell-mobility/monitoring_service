@@ -283,9 +283,11 @@ public class MonitoringService {
 			}
 			
 			// reset "since" if status has changed
-			if (reportMap.containsKey(calendarUser))
-				if (((Report) reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() != workingStatus.getLocationStatus())
+			if (reportMap.containsKey(calendarUser)) {
+				status = ((Report) reportMap.get(calendarUser)).getWorkingStatus();
+				if (status.getLocationStatus() != workingStatus.getLocationStatus())
 					workingStatus.setSince(new Date());
+			}
 			
 			// if status is AT_APPOINTMENT, some extra settings are necessary
 			if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT) {
