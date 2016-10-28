@@ -262,8 +262,12 @@ public class MonitoringService {
 			workingStatus.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
 			
 			// check if there is a previous state and since when
+			WorkingStatus status = null;
 			if (reportMap.containsKey(calendarUser))
-				workingStatus.setSince(((Report) reportMap.get(calendarUser)).getWorkingStatus().getSince());
+				status = ((Report) reportMap.get(calendarUser)).getWorkingStatus();
+			
+			if (status != null)
+				workingStatus.setSince(status.getSince());
 			else
 				workingStatus.setSince(new Date());
 			
@@ -277,7 +281,7 @@ public class MonitoringService {
 				if (posDistance < 500)
 					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
 			}
-					
+			
 			// reset "since" if status has changed
 			if (reportMap.containsKey(calendarUser))
 				if (((Report) reportMap.get(calendarUser)).getWorkingStatus().getLocationStatus() != workingStatus.getLocationStatus())
