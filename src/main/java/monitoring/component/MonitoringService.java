@@ -275,10 +275,10 @@ public class MonitoringService {
 			if (posDistance < 100) {
 				
 				// check if currentPosition is also near to location of appointment
-				posDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
+				double appDistance = DistanceCalculator.getDistance(currentPosition, calendarPosition);
 				
 				// is sensor near to the next appointment?
-				if (posDistance < 500)
+				if (appDistance < 100)
 					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
 			}
 			
