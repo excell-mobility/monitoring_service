@@ -58,6 +58,8 @@ public class MonitoringService {
  	private HazelcastInstance client;
  	
 	public IMap<String,Report> reportMap;
+	public IMap<String,Date> appointmentTracker;
+	public IMap<String,Double> appointmentStopwatch;
 	
 	public MonitoringService() {
  		this.log = LoggerFactory.getLogger(this.getClass());
@@ -78,6 +80,10 @@ public class MonitoringService {
 	    client = HazelcastClient.newHazelcastClient( clientConfig );
 	    reportMap = client.getMap( "reportMap" );
 	    reportMap.clear();
+	    appointmentTracker = client.getMap( "appointmentTracker" );
+	    appointmentTracker.clear();
+	    appointmentStopwatch = client.getMap( "appointmentStopwatch" );
+	    appointmentStopwatch.clear();
 	}
 	
 	@Scheduled(fixedRate = 15000)
@@ -96,7 +102,7 @@ public class MonitoringService {
 			Report report = null;
 			
 			// get appointments of user
-			List<CalendarAppointment> calendarAppointments = getCalendarAppointments(calendarUser);
+			List<CalendarAppointment> calendarAppointments = getCalendarAppointments(calendarUser, false);
 			
 			// only start monitoring if we have appointments
 			if (calendarAppointments.size() > 0) {
@@ -107,6 +113,9 @@ public class MonitoringService {
 				if(currentPosition != null)
 					report = createReport(calendarUser, calendarAppointments, currentPosition, currentDate);
 			}
+			
+			// update appointmentTracker
+			updateAppointmentTracker(calendarUser);
 		
 			// update reportMap
 			if (report != null)
@@ -181,7 +190,7 @@ public class MonitoringService {
 	}
 	
 	
-	private List<CalendarAppointment> getCalendarAppointments(String calendarUser) {
+	private List<CalendarAppointment> getCalendarAppointments(String calendarUser, boolean completed) {
 		
 		List<CalendarAppointment> appointments = Lists.newArrayList();
 		AppointmentExtraction extraction = new AppointmentExtraction();
@@ -198,7 +207,8 @@ public class MonitoringService {
 		StringBuilder timeFilter = new StringBuilder("")
 				.append("{\"begin\": \"").append(todayMidnight).append("\",")
 				.append("\"end\": \"").append(tomorrowMidnight).append("\",")
-				.append("\"completed\": false}");
+				.append("\"completed\": ").append(completed ? "true" : "false")
+				.append("}");
 		
 		try {
 			// get list of appointments of monitored user from Calendar Service
@@ -213,6 +223,22 @@ public class MonitoringService {
 		
 		return appointments;
 	}
+	
+	
+	private void updateAppointmentTracker(String calendarUser) {
+		
+		// update appointmentTracker
+		List<CalendarAppointment> completedAppointments = getCalendarAppointments(calendarUser, true);
+		
+		// loop over fetched appointments
+		for (CalendarAppointment completedAppointment : completedAppointments) {
+			if (appointmentTracker.containsKey(completedAppointment.getId())) {
+				appointmentTracker.delete(completedAppointment.getId());
+				appointmentStopwatch.delete(completedAppointment.getId());
+			}
+		}
+	}
+	
 	
 	private Report createReport(String calendarUser, 
 			List<CalendarAppointment> appointments,
@@ -282,7 +308,7 @@ public class MonitoringService {
 					workingStatus.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
 			}
 			
-			// reset "since" if status has changed
+			// reset "since" if status has changed (caution: this might happen because of GPS errors)
 			if (reportMap.containsKey(calendarUser)) {
 				status = ((Report) reportMap.get(calendarUser)).getWorkingStatus();
 				if (status.getLocationStatus() != workingStatus.getLocationStatus())
@@ -291,14 +317,29 @@ public class MonitoringService {
 			
 			// if status is AT_APPOINTMENT, some extra settings are necessary
 			if (workingStatus.getLocationStatus() == WorkingStatus.LocationStatus.AT_APPOINTMENT) {
+				
+				double timeSpentAtAppointment = 0.0;
+				
+				// track appointment to get the real "since" value
+				if (appointmentTracker.containsKey(nextAppointment.getId())) {
+					workingStatus.setSince(appointmentTracker.get(nextAppointment.getId()));
+					// add time spent at appointment
+					timeSpentAtAppointment = appointmentStopwatch.get(nextAppointment.getId()) + 0.25;
+				}
+				else
+					appointmentTracker.put(nextAppointment.getId(), workingStatus.getSince());
+				
+				appointmentStopwatch.put(nextAppointment.getId(),timeSpentAtAppointment);
+				
 				// reduce duration of appointment (total duration minus time already passed at appointment)
 				appointmentDuration = 
 						DateAnalyser.getDurationBetweenDates(
 								nextAppointment.getStartDate(), nextAppointment.getEndDate()
 						) -
-						DateAnalyser.getDurationBetweenDates(
+						(int) Math.round(timeSpentAtAppointment);
+						/*DateAnalyser.getDurationBetweenDates(
 								workingStatus.getSince(), new Date()
-						);
+						);*/
 				
 				// update nextAppointment to look at the following appointment (route, arrival, delay)
 				if (appointments.size() == 1)
