@@ -40,7 +40,7 @@ public class Application {
           .genericModelSubstitutes(ResponseEntity.class)
           //.protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
-          .host("dbl43.beuth-hochschule.de/excell-monitoring-api")
+          .host("141.64.5.234/excell-monitoring-api")
           .apiInfo(apiInfo())
           ;
     }
