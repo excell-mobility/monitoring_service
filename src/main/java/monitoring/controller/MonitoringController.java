@@ -37,6 +37,32 @@ public class MonitoringController {
 		JSONObject response = monitoringService.getReport(calendarId);
 		return response;
     }
+	
+	@RequestMapping(value = "/v1/monitoringnew", method = RequestMethod.GET)
+    @ApiOperation(
+    		value = "Get status report of monitored sensor", 
+    		response=Report.class,
+    		produces = "application/json")
+    @ResponseBody
+    public JSONObject monitoringnew(
+    		@ApiParam(name="deviceId", value="Id of monitored device", defaultValue="") 
+    		@RequestParam(value="deviceId", defaultValue="") String deviceId,
+    		
+    		@ApiParam(name="timestamp", value="Timestamp of the appointment", defaultValue="")
+    		@RequestParam(value="timestamp", defaultValue="0") Long timestamp,
+    		
+    		@ApiParam(name="appointmentLat", value="Latitude of new appointment", defaultValue="51.029")
+    		@RequestParam(value="appointmentLat", defaultValue="0.0") Double latitude,
+    		
+    		@ApiParam(name="appointmentLon", value="Longitude of new appointment", defaultValue="13.736") 
+    		@RequestParam(value="appointmentLon", defaultValue="0.0") Double longitude,
+    		
+    		@ApiParam(name="delay", value="delay of the appointment", defaultValue="0")
+    		@RequestParam(value="delay", defaultValue="0") Integer delay) {
+        
+		JSONObject response = monitoringService.getReport(deviceId, timestamp, latitude, longitude, delay);
+		return response;
+    }
     
     @ExceptionHandler(value = Exception.class)
     public String inputParameterError(Exception e) {

@@ -86,6 +86,66 @@ public class MonitoringService {
 	    appointmentStopwatch.clear();
 	}
 	
+	public JSONObject getReport(String deviceId, long timestamp, 
+			double latitude, double longitude, int delay) {
+		
+		Date appointmentTime = new Date(timestamp);
+		GeoPoint appointmentLocation = new GeoPoint(latitude, longitude);
+		
+		GeoPoint userPositionDeviceId = getUserPositionDeviceId(deviceId);
+		JSONObject obj = new JSONObject();
+		
+		// get current date
+		Date currentDate = new Date();
+		
+		// calculate route between current location and next appointment
+		List<Double[]> routeNext = getRouteNext(userPositionDeviceId, appointmentLocation);
+		
+		// set up location status
+		WorkingStatus status = new WorkingStatus();
+		double posDistance = DistanceCalculator.getDistance(userPositionDeviceId, appointmentLocation);
+		if (posDistance < 100) {
+			status.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
+		} else {
+			status.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+		}
+		
+		// calculate time between current date and start date of appointment
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(currentDate);
+		
+		// get travel time to next appointment from current position and add it up to time estimation
+		calendar.add(Calendar.MINUTE, getRouteTravelTime(userPositionDeviceId, appointmentLocation));
+		
+		// set up delay and time status
+		if (calendar.getTime().before(appointmentTime)) {
+			obj.put("timeStatus", Report.TimeStatus.IN_TIME);
+			obj.put("delayInMin", 0);
+		}
+		else {
+			Long delayInMinutes = TimeUnit.MILLISECONDS.toMinutes(calendar.getTime().getTime() 
+					- appointmentTime.getTime());
+			
+			// always add 1 minute (rounding up the seconds)
+			// only set time status to DELAYED if delay is greater than 5 minutes
+			if (delayInMinutes.intValue() + 1 >= 5) {
+				obj.put("timeStatus", Report.TimeStatus.DELAYED);
+			}
+			else {
+				obj.put("timeStatus", Report.TimeStatus.IN_TIME);
+			}
+			obj.put("delayInMin", delayInMinutes.intValue() + 1);
+		}
+		
+		obj.put("position", userPositionDeviceId);
+		obj.put("routeTotal", routeNext);
+		obj.put("routeNext", routeNext);
+		obj.put("workingStatus", status.getLocationStatus());
+		obj.put("expectedTimeOfArrival", calendar.getTime());
+		return obj;
+		
+	}
+	
 	@Scheduled(fixedRate = 15000)
 	public void update() {
 		
@@ -147,6 +207,13 @@ public class MonitoringService {
 		return extraction.extractCalendarUsers(calendarUsers);
 	}
 
+	private GeoPoint getUserPositionDeviceId(String deviceId) {
+
+		GeoPoint currentPosition = null;
+		currentPosition = getTrackingPosition(deviceId);
+		return currentPosition;
+		
+	}
 	
 	private GeoPoint getUserPosition(String calendarUser) {
 
