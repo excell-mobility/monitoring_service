@@ -102,12 +102,13 @@ public class MonitoringService {
 		List<Double[]> routeNext = getRouteNext(userPositionDeviceId, appointmentLocation);
 		
 		// set up location status
-		WorkingStatus status = new WorkingStatus();
+		JSONObject workingStatus = new JSONObject();
+		workingStatus.put("since", null);
 		double posDistance = DistanceCalculator.getDistance(userPositionDeviceId, appointmentLocation);
 		if (posDistance < 100) {
-			status.setLocationStatus(WorkingStatus.LocationStatus.AT_APPOINTMENT);
+			workingStatus.put("locationStatus", WorkingStatus.LocationStatus.AT_APPOINTMENT);
 		} else {
-			status.setLocationStatus(WorkingStatus.LocationStatus.ON_THE_MOVE);
+			workingStatus.put("locationStatus", WorkingStatus.LocationStatus.ON_THE_MOVE);
 		}
 		
 		// calculate time between current date and start date of appointment
@@ -138,9 +139,9 @@ public class MonitoringService {
 		}
 		
 		obj.put("position", userPositionDeviceId);
-		obj.put("routeTotal", routeNext);
+		obj.put("routeTotal", null);
 		obj.put("routeNext", routeNext);
-		obj.put("workingStatus", status.getLocationStatus());
+		obj.put("workingStatus", workingStatus);
 		obj.put("expectedTimeOfArrival", calendar.getTime());
 		return obj;
 		
