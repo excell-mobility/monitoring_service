@@ -92,19 +92,25 @@ public class MonitoringService {
 		Date appointmentTime = new Date(timestamp);
 		GeoPoint appointmentLocation = new GeoPoint(latitude, longitude);
 		
-		GeoPoint userPositionDeviceId = getUserPositionDeviceId(deviceId);
+		GeoPoint userPosition = getTrackingPosition(deviceId);
+		
+		if (userPosition == null) {
+			log.error("No current tracking position found. Unable to create report");
+			return null;
+		}
+		
 		JSONObject obj = new JSONObject();
 		
 		// get current date
 		Date currentDate = new Date();
 		
 		// calculate route between current location and next appointment
-		List<Double[]> routeNext = getRouteNext(userPositionDeviceId, appointmentLocation);
+		List<Double[]> routeNext = getRouteNext(userPosition, appointmentLocation);
 		
 		// set up location status
 		JSONObject workingStatus = new JSONObject();
 		workingStatus.put("since", null);
-		double posDistance = DistanceCalculator.getDistance(userPositionDeviceId, appointmentLocation);
+		double posDistance = DistanceCalculator.getDistance(userPosition, appointmentLocation);
 		if (posDistance < 100) {
 			workingStatus.put("locationStatus", WorkingStatus.LocationStatus.AT_APPOINTMENT);
 		} else {
@@ -116,7 +122,7 @@ public class MonitoringService {
 		calendar.setTime(currentDate);
 		
 		// get travel time to next appointment from current position and add it up to time estimation
-		calendar.add(Calendar.MINUTE, getRouteTravelTime(userPositionDeviceId, appointmentLocation));
+		calendar.add(Calendar.MINUTE, getRouteTravelTime(userPosition, appointmentLocation));
 		
 		// set up delay and time status
 		if (calendar.getTime().before(appointmentTime)) {
@@ -138,7 +144,7 @@ public class MonitoringService {
 			obj.put("delayInMin", delayInMinutes.intValue() + 1);
 		}
 		
-		obj.put("position", userPositionDeviceId);
+		obj.put("position", userPosition);
 		obj.put("routeTotal", null);
 		obj.put("routeNext", routeNext);
 		obj.put("workingStatus", workingStatus);
@@ -208,13 +214,6 @@ public class MonitoringService {
 		return extraction.extractCalendarUsers(calendarUsers);
 	}
 
-	private GeoPoint getUserPositionDeviceId(String deviceId) {
-
-		GeoPoint currentPosition = null;
-		currentPosition = getTrackingPosition(deviceId);
-		return currentPosition;
-		
-	}
 	
 	private GeoPoint getUserPosition(String calendarUser) {
 
