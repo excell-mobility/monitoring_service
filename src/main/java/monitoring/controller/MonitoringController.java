@@ -2,6 +2,9 @@ package monitoring.controller;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import exceptions.InternalMonitoringErrorException;
+import exceptions.RoutingNotFoundException;
 import beans.Report;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,7 +37,7 @@ public class MonitoringController {
     @ResponseBody
     public JSONObject monitoring(
     		@ApiParam(name="calendarId", value="Id of monitored sensor", defaultValue="") 
-    		@RequestParam(value="calendarId", defaultValue="") String calendarId) {
+    		@RequestParam(value="calendarId", defaultValue="") String calendarId) throws InternalMonitoringErrorException {
         
 		JSONObject response = monitoringService.getReport(calendarId);
 		return response;
@@ -58,16 +63,16 @@ public class MonitoringController {
     		@RequestParam(value="appointmentLon", defaultValue="0.0") Double longitude,
     		
     		@ApiParam(name="delay", value="delay of the appointment", defaultValue="0")
-    		@RequestParam(value="delay", defaultValue="0") Integer delay) {
+    		@RequestParam(value="delay", defaultValue="0") Integer delay) throws InternalMonitoringErrorException {
         
 		JSONObject response = monitoringService.getReport(deviceId, timestamp, latitude, longitude, delay);
 		return response;
     }
     
-    @ExceptionHandler(value = Exception.class)
-    public String inputParameterError(Exception e) {
-    	e.printStackTrace();
-    	return "Your input parameters for the monitoring service are invalid!";
+    @ExceptionHandler(value = InternalMonitoringErrorException.class)
+    public BodyBuilder monitoringError() {
+    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
     }
+    
     
 }

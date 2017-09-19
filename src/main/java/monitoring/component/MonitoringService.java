@@ -42,6 +42,7 @@ import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 
+import exceptions.InternalMonitoringErrorException;
 import extraction.AppointmentExtraction;
 
 @Component
@@ -87,7 +88,7 @@ public class MonitoringService {
 	}
 	
 	public JSONObject getReport(String deviceId, long timestamp, 
-			double latitude, double longitude, int delay) {
+			double latitude, double longitude, int delay) throws InternalMonitoringErrorException {
 		
 		Date appointmentTime = new Date(timestamp);
 		GeoPoint appointmentLocation = new GeoPoint(latitude, longitude);
@@ -95,8 +96,7 @@ public class MonitoringService {
 		GeoPoint userPosition = getTrackingPosition(deviceId);
 		
 		if (userPosition == null) {
-			log.error("No current tracking position found. Unable to create report");
-			return null;
+			throw new InternalMonitoringErrorException("No current tracking position found. Unable to create report");
 		}
 		
 		JSONObject obj = new JSONObject();
@@ -154,7 +154,7 @@ public class MonitoringService {
 	}
 	
 	@Scheduled(fixedRate = 15000)
-	public void update() {
+	public void update() throws InternalMonitoringErrorException {
 		
 		// get current time
 		Date currentDate = new Date();
@@ -196,7 +196,7 @@ public class MonitoringService {
 		}
 	}
 	
-	private List<String> getCalendarUsers() {
+	private List<String> getCalendarUsers() throws InternalMonitoringErrorException {
 		
 		AppointmentExtraction extraction = new AppointmentExtraction();
 		JSONArray calendarUsers = null;
@@ -205,17 +205,17 @@ public class MonitoringService {
 			calendarUsers = calendarConnector.getCalendarUsers();
 		}
 		catch (JSONException jEx) {
-			//
+			throw new InternalMonitoringErrorException("JSON error while getting calender users");
 		}
 		catch (IOException ioEx) {
-			//
+			throw new InternalMonitoringErrorException("IO error while getting calender users");
 		}
 		
 		return extraction.extractCalendarUsers(calendarUsers);
 	}
 
 	
-	private GeoPoint getUserPosition(String calendarUser) {
+	private GeoPoint getUserPosition(String calendarUser) throws InternalMonitoringErrorException {
 
 		String deviceId = null;
 		GeoPoint currentPosition = null;
@@ -224,7 +224,7 @@ public class MonitoringService {
 		try {
 			deviceId = idmConnector.extractDeviceIdOfUser(calendarUser);
 		} catch (IOException ioEx) {
-			//ioEx.printStackTrace();
+			throw new InternalMonitoringErrorException("IO error while getting tracking device id from IDM");
 		}
 		currentPosition = getTrackingPosition(deviceId);
 
@@ -241,7 +241,7 @@ public class MonitoringService {
 	}
 	
 	
-	private GeoPoint getTrackingPosition(String deviceId) {
+	private GeoPoint getTrackingPosition(String deviceId) throws InternalMonitoringErrorException {
 		
 		GeoPoint trackingPosition = null;
 		
@@ -250,14 +250,15 @@ public class MonitoringService {
 			trackingPosition = trackingConnector.getCurrentPosition(deviceId);
 		}
 		catch (Exception ex) {
-			//
+			throw new InternalMonitoringErrorException("Error while getting tracking data for a device "
+					+ "id from the tracking service");
 		}
 		
 		return trackingPosition;
 	}
 	
 	
-	private List<CalendarAppointment> getCalendarAppointments(String calendarUser, boolean completed) {
+	private List<CalendarAppointment> getCalendarAppointments(String calendarUser, boolean completed) throws InternalMonitoringErrorException {
 		
 		List<CalendarAppointment> appointments = Lists.newArrayList();
 		AppointmentExtraction extraction = new AppointmentExtraction();
@@ -285,14 +286,14 @@ public class MonitoringService {
 			appointments = extraction.extractAppointments(appointmentsForCalendar);
 		}
 		catch (Exception ex) {
-			//
+			throw new InternalMonitoringErrorException("Error while getting appointments for a calender user");
 		}
 		
 		return appointments;
 	}
 	
 	
-	private void updateAppointmentTracker(String calendarUser) {
+	private void updateAppointmentTracker(String calendarUser) throws InternalMonitoringErrorException {
 		
 		// update appointmentTracker
 		List<CalendarAppointment> completedAppointments = getCalendarAppointments(calendarUser, true);
@@ -531,14 +532,14 @@ public class MonitoringService {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public JSONObject getReport(String calendarId) {
+	public JSONObject getReport(String calendarId) throws InternalMonitoringErrorException {
 		JSONObject obj = new JSONObject();
 		
 		String calId = "";
 		try {
 			calId = URLDecoder.decode(URLEncoder.encode(calendarId,"UTF-8"),"UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			//
+			throw new InternalMonitoringErrorException("Error while decoding the calender id");
 		}
 		
 		if (reportMap.containsKey(calId)) {
@@ -557,7 +558,7 @@ public class MonitoringService {
 			obj.put("delayInMin", report.getDelayInMin());
 		}
 		else {
-			obj.put("Error", "Calendar not found!");
+			throw new InternalMonitoringErrorException("Calendar not found!");
 		}
 		
 		return obj;
