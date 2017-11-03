@@ -1,5 +1,7 @@
 package monitoring;
 
+import java.util.ArrayList;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +13,7 @@ import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
+import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -38,14 +41,14 @@ public class Application {
           .build()
           .genericModelSubstitutes(ResponseEntity.class)
           //.protocols(Sets.newHashSet("https"))
-//          .host("localhost:43444")
-          .host("141.64.5.234/excell-monitoring-api")
+          .host("localhost:43444")
+          //.host("141.64.5.234/excell-monitoring-api")
           .apiInfo(apiInfo())
           ;
     }
     
     private ApiInfo apiInfo() {
-        ApiInfo apiInfo = new ApiInfo(
+		ApiInfo apiInfo = new ApiInfo(
           "ExCELL Monitoring API",
           "This API provides a status report for a monitored device A with regards to a target location B. It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached.",
           "Version 1.0",
@@ -56,7 +59,7 @@ public class Application {
         		  "fkunde@beuth-hochschule"),
           "Apache 2",
           "http://www.apache.org/licenses/LICENSE-2.0",
-          null);
+          new ArrayList<VendorExtension>());
         return apiInfo;
     }
 }
