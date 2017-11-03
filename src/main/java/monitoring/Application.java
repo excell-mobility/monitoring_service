@@ -7,11 +7,10 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-//import com.google.common.collect.Sets;
-
 import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
 import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -48,12 +47,16 @@ public class Application {
     private ApiInfo apiInfo() {
         ApiInfo apiInfo = new ApiInfo(
           "ExCELL Monitoring API",
-          "This API provides information about position and status of a monitored sensor",
+          "This API provides a status report for a monitored device A with regards to a target location B. It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached.",
           "Version 1.0",
           "Use only for testing",
-          "fkunde@beuth-hochschule",
+          new Contact(
+        		  "Felix Kunde",
+        		  "https://projekt.beuth-hochschule.de/magda/poeple/felix-kunde/",
+        		  "fkunde@beuth-hochschule"),
           "Apache 2",
-          "http://www.apache.org/licenses/LICENSE-2.0");
+          "http://www.apache.org/licenses/LICENSE-2.0",
+          null);
         return apiInfo;
     }
 }

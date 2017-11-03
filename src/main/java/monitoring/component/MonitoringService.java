@@ -87,8 +87,13 @@ public class MonitoringService {
 	    appointmentStopwatch.clear();
 	}
 	
-	public JSONObject getReport(String deviceId, long timestamp, 
-			double latitude, double longitude, int delay) throws InternalMonitoringErrorException {
+	public JSONObject getReport(
+			String deviceId,
+			long timestamp, 
+			double latitude,
+			double longitude,
+			int delay
+			) throws InternalMonitoringErrorException {
 		
 		Date appointmentTime = new Date(timestamp);
 		GeoPoint appointmentLocation = new GeoPoint(latitude, longitude);

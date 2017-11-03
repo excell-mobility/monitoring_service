@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import exceptions.InternalMonitoringErrorException;
-import exceptions.RoutingNotFoundException;
 import beans.Report;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,14 +29,15 @@ public class MonitoringController {
 	private MonitoringService monitoringService;
 	
 	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
-    @ApiOperation(
-    		value = "Get status report of monitored sensor", 
+	@ApiOperation(
+    		value = "DEPRECATED - Get status report by checking calendar service", 
     		response=Report.class,
     		produces = "application/json")
     @ResponseBody
     public JSONObject monitoring(
-    		@ApiParam(name="calendarId", value="Id of monitored sensor", defaultValue="") 
-    		@RequestParam(value="calendarId", defaultValue="") String calendarId) throws InternalMonitoringErrorException {
+    		@ApiParam(name="calendarId", value="Id of calendar (see Calendar Service)", defaultValue="") 
+    		@RequestParam(value="calendarId", defaultValue="") String calendarId
+    		) throws InternalMonitoringErrorException {
         
 		JSONObject response = monitoringService.getReport(calendarId);
 		return response;
@@ -45,25 +45,26 @@ public class MonitoringController {
 	
 	@RequestMapping(value = "/v1/monitoringnew", method = RequestMethod.GET)
     @ApiOperation(
-    		value = "Get status report of monitored sensor", 
+    		value = "Get status report using current position of monitored device", 
     		response=Report.class,
     		produces = "application/json")
     @ResponseBody
     public JSONObject monitoringnew(
-    		@ApiParam(name="deviceId", value="Id of monitored device", defaultValue="") 
+    		@ApiParam(name="deviceId", value="Id of monitored device (see Tracking Service)", defaultValue="") 
     		@RequestParam(value="deviceId", defaultValue="") String deviceId,
     		
-    		@ApiParam(name="timestamp", value="Timestamp of the appointment", defaultValue="")
+    		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="")
     		@RequestParam(value="timestamp", defaultValue="0") Long timestamp,
     		
-    		@ApiParam(name="appointmentLat", value="Latitude of new appointment", defaultValue="51.029")
+    		@ApiParam(name="appointmentLat", value="Latitude of upcoming appointment", defaultValue="51.029")
     		@RequestParam(value="appointmentLat", defaultValue="0.0") Double latitude,
     		
-    		@ApiParam(name="appointmentLon", value="Longitude of new appointment", defaultValue="13.736") 
+    		@ApiParam(name="appointmentLon", value="Longitude of upcoming appointment", defaultValue="13.736") 
     		@RequestParam(value="appointmentLon", defaultValue="0.0") Double longitude,
     		
-    		@ApiParam(name="delay", value="delay of the appointment", defaultValue="0")
-    		@RequestParam(value="delay", defaultValue="0") Integer delay) throws InternalMonitoringErrorException {
+    		@ApiParam(name="delay", value="Known current delay", defaultValue="0")
+    		@RequestParam(value="delay", defaultValue="0") Integer delay
+    		) throws InternalMonitoringErrorException {
         
 		JSONObject response = monitoringService.getReport(deviceId, timestamp, latitude, longitude, delay);
 		return response;
