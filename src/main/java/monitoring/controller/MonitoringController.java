@@ -53,7 +53,7 @@ public class MonitoringController {
     		produces = "application/json")
     @ResponseBody
     public JSONObject monitoring(
-    		@ApiParam(name="deviceId", value="Id of monitored device (see Tracking Service)", defaultValue="") 
+    		@ApiParam(name="deviceId", value="Id of monitored device (use 'demo' to see test result)", defaultValue="") 
     		@RequestParam(value="deviceId", defaultValue="") String deviceId,
     		
     		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="1483225200")

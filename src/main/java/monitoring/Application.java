@@ -52,12 +52,15 @@ public class Application {
     private ApiInfo apiInfo() {
 		ApiInfo apiInfo = new ApiInfo(
           "ExCELL Monitoring API",
-          "This API provides a status report for a monitored device A with regards to a target location B. It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached.",
+          "This API provides a status report for a monitored device A with regards to a target location B."
+          + " It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached."
+          + " Internally the Monitoring Service queries the ExCELL Tracking Service for the current position."
+          + " Please, make sure that the ID used here as first parameter also exists in the Tracking Service.",
           "Version 1.0",
           "Use only for testing",
           new Contact(
-        		  "Felix Kunde",
-        		  "https://projekt.beuth-hochschule.de/magda/poeple/felix-kunde/",
+        		  "Felix Kunde, Stephan Pieper",
+        		  "https://projekt.beuth-hochschule.de/magda/poeple",
         		  "fkunde@beuth-hochschule"),
           "Apache 2",
           "http://www.apache.org/licenses/LICENSE-2.0",

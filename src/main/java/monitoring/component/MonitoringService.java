@@ -97,8 +97,10 @@ public class MonitoringService {
 		
 		Date appointmentTime = new Date(timestamp);
 		GeoPoint appointmentLocation = new GeoPoint(latitude, longitude);
+		GeoPoint userPosition = new GeoPoint(51.04, 13.73);
 		
-		GeoPoint userPosition = getTrackingPosition(deviceId);
+		if (!deviceId.equals("demo"))
+			userPosition = getTrackingPosition(deviceId);
 		
 		if (userPosition == null) {
 			throw new InternalMonitoringErrorException("No current tracking position found. Unable to create report");
