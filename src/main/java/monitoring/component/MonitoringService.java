@@ -1,90 +1,90 @@
 package monitoring.component;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+//import java.io.IOException;
+//import java.io.UnsupportedEncodingException;
+//import java.net.URLDecoder;
+//import java.net.URLEncoder;
+//import java.time.LocalDate;
+//import java.time.LocalTime;
+//import java.time.ZoneId;
+//import java.time.ZonedDateTime;
+//import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
+//import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.json.JSONArray;
-import org.json.JSONException;
+//import org.json.JSONArray;
+//import org.json.JSONException;
 import org.json.simple.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+//import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import rest.CalendarConnector;
-import rest.IDMConnector;
+//import rest.CalendarConnector;
+//import rest.IDMConnector;
 import rest.RoutingConnector;
 import rest.TrackingConnector;
-import utility.DateAnalyser;
+//import utility.DateAnalyser;
 import utility.DistanceCalculator;
 import utility.MeasureConverter;
-import beans.CalendarAppointment;
+//import beans.CalendarAppointment;
 import beans.GeoPoint;
 import beans.Report;
 import beans.WorkingStatus;
 
 import com.google.common.collect.Lists;
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.config.ClientNetworkConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
+//import com.hazelcast.client.HazelcastClient;
+//import com.hazelcast.client.config.ClientConfig;
+//import com.hazelcast.client.config.ClientNetworkConfig;
+//import com.hazelcast.core.HazelcastInstance;
+//import com.hazelcast.core.IMap;
 
 import exceptions.InternalMonitoringErrorException;
-import extraction.AppointmentExtraction;
+//import extraction.AppointmentExtraction;
 
 @Component
 public class MonitoringService {
 	
-	private final Logger log;
-	private final CalendarConnector calendarConnector;
+//	private final Logger log;
+//	private final CalendarConnector calendarConnector;
  	private final RoutingConnector routingConnector;
  	private final TrackingConnector trackingConnector;
- 	private final IDMConnector idmConnector;
- 	private ClientConfig clientConfig;
- 	private ClientNetworkConfig networkConfig;
- 	private List<String> addresses;
- 	private HazelcastInstance client;
+// 	private final IDMConnector idmConnector;
+// 	private ClientConfig clientConfig;
+// 	private ClientNetworkConfig networkConfig;
+// 	private List<String> addresses;
+// 	private HazelcastInstance client;
  	
-	public IMap<String,Report> reportMap;
-	public IMap<String,Date> appointmentTracker;
-	public IMap<String,Double> appointmentStopwatch;
+//	public IMap<String,Report> reportMap;
+//	public IMap<String,Date> appointmentTracker;
+//	public IMap<String,Double> appointmentStopwatch;
 	
 	public MonitoringService() {
- 		this.log = LoggerFactory.getLogger(this.getClass());
- 		this.calendarConnector = new CalendarConnector();
+// 		this.log = LoggerFactory.getLogger(this.getClass());
+// 		this.calendarConnector = new CalendarConnector();
  		this.routingConnector = new RoutingConnector();
  		this.trackingConnector = new TrackingConnector();
- 		this.idmConnector = new IDMConnector();
+// 		this.idmConnector = new IDMConnector();
  		// hazelcast configuration
-	    clientConfig = new ClientConfig();
-	    networkConfig = new ClientNetworkConfig();
-	    addresses = new LinkedList<String>();
-//	    addresses.add("127.0.0.1:5701");
-	    addresses.add("141.64.5.201:5701");
-	    addresses.add("141.64.5.202:5701");
-	    addresses.add("141.64.5.203:5701");
-	    networkConfig.setAddresses(addresses);
-	    clientConfig.setNetworkConfig(networkConfig);
-	    client = HazelcastClient.newHazelcastClient( clientConfig );
-	    reportMap = client.getMap( "reportMap" );
-	    reportMap.clear();
-	    appointmentTracker = client.getMap( "appointmentTracker" );
-	    appointmentTracker.clear();
-	    appointmentStopwatch = client.getMap( "appointmentStopwatch" );
-	    appointmentStopwatch.clear();
+//	    clientConfig = new ClientConfig();
+//	    networkConfig = new ClientNetworkConfig();
+//	    addresses = new LinkedList<String>();
+////	    addresses.add("127.0.0.1:5701");
+//	    addresses.add("141.64.5.201:5701");
+//	    addresses.add("141.64.5.202:5701");
+//	    addresses.add("141.64.5.203:5701");
+//	    networkConfig.setAddresses(addresses);
+//	    clientConfig.setNetworkConfig(networkConfig);
+//	    client = HazelcastClient.newHazelcastClient( clientConfig );
+//	    reportMap = client.getMap( "reportMap" );
+//	    reportMap.clear();
+//	    appointmentTracker = client.getMap( "appointmentTracker" );
+//	    appointmentTracker.clear();
+//	    appointmentStopwatch = client.getMap( "appointmentStopwatch" );
+//	    appointmentStopwatch.clear();
 	}
 	
 	public JSONObject getReport(
@@ -136,7 +136,7 @@ public class MonitoringService {
 		}
 		else {
 			Long delayInMinutes = TimeUnit.MILLISECONDS.toMinutes(calendar.getTime().getTime() 
-					- appointmentTime.getTime());
+					- appointmentTime.getTime() + delay);
 			
 			// always add 1 minute (rounding up the seconds)
 			// only set time status to DELAYED if delay is greater than 5 minutes
@@ -158,6 +158,7 @@ public class MonitoringService {
 		
 	}
 	
+	/*
 	@Scheduled(fixedRate = 15000)
 	public void update() throws InternalMonitoringErrorException {
 		
@@ -218,7 +219,6 @@ public class MonitoringService {
 		
 		return extraction.extractCalendarUsers(calendarUsers);
 	}
-
 	
 	private GeoPoint getUserPosition(String calendarUser) throws InternalMonitoringErrorException {
 
@@ -244,7 +244,7 @@ public class MonitoringService {
 		return currentPosition;
 		
 	}
-	
+	*/
 	
 	private GeoPoint getTrackingPosition(String deviceId) throws InternalMonitoringErrorException {
 		
@@ -262,7 +262,7 @@ public class MonitoringService {
 		return trackingPosition;
 	}
 	
-	
+	/*
 	private List<CalendarAppointment> getCalendarAppointments(String calendarUser, boolean completed) throws InternalMonitoringErrorException {
 		
 		List<CalendarAppointment> appointments = Lists.newArrayList();
@@ -410,9 +410,9 @@ public class MonitoringService {
 								nextAppointment.getStartDate(), nextAppointment.getEndDate()
 						) -
 						(int) Math.round(timeSpentAtAppointment);
-						/*DateAnalyser.getDurationBetweenDates(
-								workingStatus.getSince(), new Date()
-						);*/
+						//DateAnalyser.getDurationBetweenDates(
+							//	workingStatus.getSince(), new Date()
+						//);
 				
 				// update nextAppointment to look at the following appointment (route, arrival, delay)
 				if (appointments.size() == 1)
@@ -479,14 +479,14 @@ public class MonitoringService {
 		if (calcRouteTotal)
 			//try {
 				routeTotal = routingConnector.getRoute(appPositions);
-			/*}
-			catch (RoutingNotFoundException rEx) {
-				return null;
-			}*/
+//			}
+//			catch (RoutingNotFoundException rEx) {
+//				return null;
+//			}
 		
 		return routeTotal;
 	}
-	
+	*/
 	
 	private List<Double[]> getRouteNext(GeoPoint currentPosition, GeoPoint nextAppointmentPosition) {
 		
@@ -517,6 +517,7 @@ public class MonitoringService {
 		return minutesToNextAppointment;
 	}
 	
+	/*
 	private void calculateDelay(Report report, Date is, Date should) {
 		if (is.before(should)) {
 			report.setTimeStatus(Report.TimeStatus.IN_TIME);
@@ -535,6 +536,7 @@ public class MonitoringService {
 			report.setDelayInMin(delay.intValue() + 1);
 		}
 	}
+	
 	
 	@SuppressWarnings("unchecked")
 	public JSONObject getReport(String calendarId) throws InternalMonitoringErrorException {
@@ -568,5 +570,6 @@ public class MonitoringService {
 		
 		return obj;
 	}
+	*/
 	
 }

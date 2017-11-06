@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.Contact;
 import springfox.documentation.service.VendorExtension;
@@ -36,13 +38,13 @@ public class Application {
         return new Docket(DocumentationType.SWAGGER_2)
           .groupName("excell-monitoring-api")
           .select()
-          	//.apis(RequestHandlerSelectors.any()) 
-          	//.paths(PathSelectors.any())
-          .build()
+          	.apis(RequestHandlerSelectors.any()) 
+          	.paths(PathSelectors.regex("/v1/monitoring"))
+          	.build()
           .genericModelSubstitutes(ResponseEntity.class)
           //.protocols(Sets.newHashSet("https"))
-          //.host("localhost:43444")
-          .host("141.64.5.234/excell-monitoring-api")
+          .host("localhost:43444")
+          //.host("141.64.5.234/excell-monitoring-api")
           .apiInfo(apiInfo())
           ;
     }

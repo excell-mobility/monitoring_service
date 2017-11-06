@@ -28,9 +28,11 @@ public class MonitoringController {
 	@Autowired
 	private MonitoringService monitoringService;
 	
+	/*
+	@Deprecated
 	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
 	@ApiOperation(
-    		value = "DEPRECATED - Get status report by checking calendar service", 
+    		value = "Get status report by checking calendar service (deprecated)", 
     		response=Report.class,
     		produces = "application/json")
     @ResponseBody
@@ -42,19 +44,20 @@ public class MonitoringController {
 		JSONObject response = monitoringService.getReport(calendarId);
 		return response;
     }
+	*/
 	
-	@RequestMapping(value = "/v1/monitoringnew", method = RequestMethod.GET)
+	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
     @ApiOperation(
     		value = "Get status report using current position of monitored device", 
     		response=Report.class,
     		produces = "application/json")
     @ResponseBody
-    public JSONObject monitoringnew(
+    public JSONObject monitoring(
     		@ApiParam(name="deviceId", value="Id of monitored device (see Tracking Service)", defaultValue="") 
     		@RequestParam(value="deviceId", defaultValue="") String deviceId,
     		
-    		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="")
-    		@RequestParam(value="timestamp", defaultValue="0") Long timestamp,
+    		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="1483225200")
+    		@RequestParam(value="timestamp", defaultValue="1483225200") Long timestamp,
     		
     		@ApiParam(name="appointmentLat", value="Latitude of upcoming appointment", defaultValue="51.029")
     		@RequestParam(value="appointmentLat", defaultValue="0.0") Double latitude,
@@ -62,7 +65,7 @@ public class MonitoringController {
     		@ApiParam(name="appointmentLon", value="Longitude of upcoming appointment", defaultValue="13.736") 
     		@RequestParam(value="appointmentLon", defaultValue="0.0") Double longitude,
     		
-    		@ApiParam(name="delay", value="Known current delay", defaultValue="0")
+    		@ApiParam(name="delay", value="Known current delay in minutes", defaultValue="5")
     		@RequestParam(value="delay", defaultValue="0") Integer delay
     		) throws InternalMonitoringErrorException {
         
