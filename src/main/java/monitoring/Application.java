@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import monitoring.component.MonitoringService;
@@ -16,10 +17,13 @@ import monitoring.controller.MonitoringController;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.ApiKey;
 import springfox.documentation.service.Contact;
 import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger.web.ApiKeyVehicle;
+import springfox.documentation.swagger.web.SecurityConfiguration;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
@@ -48,9 +52,19 @@ public class Application {
           //.host("localhost:43444")
           //.host("141.64.5.234/excell-monitoring-api")
           .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice")
+          .securitySchemes(Lists.newArrayList(apiKey()))
           .apiInfo(apiInfo())
           ;
     }
+    
+	private ApiKey apiKey() {
+		return new ApiKey("apiKey", "Authorization", "header");
+	}
+
+	@Bean
+	public SecurityConfiguration security() {
+		return new SecurityConfiguration(null, null, null, "monitoringservice", "Bearer", ApiKeyVehicle.HEADER, "Authorization", ",");
+	}
     
     private ApiInfo apiInfo() {
 		ApiInfo apiInfo = new ApiInfo(
