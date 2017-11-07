@@ -1,6 +1,7 @@
 package monitoring;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,9 +19,12 @@ import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.ApiKey;
+import springfox.documentation.service.AuthorizationScope;
 import springfox.documentation.service.Contact;
+import springfox.documentation.service.SecurityReference;
 import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spi.service.contexts.SecurityContext;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.ApiKeyVehicle;
 import springfox.documentation.swagger.web.SecurityConfiguration;
@@ -53,17 +57,36 @@ public class Application {
           //.host("141.64.5.234/excell-monitoring-api")
           .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice")
           .securitySchemes(Lists.newArrayList(apiKey()))
+          .securityContexts(Lists.newArrayList(securityContext()))
           .apiInfo(apiInfo())
           ;
     }
     
 	private ApiKey apiKey() {
-		return new ApiKey("apiKey", "Authorization", "header");
+		return new ApiKey("api_key", "Authorization", "header");
 	}
+	
+    private SecurityContext securityContext() {
+        return SecurityContext.builder()
+            .securityReferences(defaultAuth())
+            .forPaths(PathSelectors.regex("/*.*"))
+            .build();
+    }
+
+    private List<SecurityReference> defaultAuth() {
+    	List<SecurityReference> ls = new ArrayList<>();
+    	AuthorizationScope authorizationScope
+    		= new AuthorizationScope("global", "accessEverything");
+    	AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
+    	authorizationScopes[0] = authorizationScope;
+    	SecurityReference s = new SecurityReference("api_key", authorizationScopes);
+    	ls.add(s);
+    	return ls;
+    }
 
 	@Bean
 	public SecurityConfiguration security() {
-		return new SecurityConfiguration(null, null, null, "monitoringservice", "Bearer", ApiKeyVehicle.HEADER, "Authorization", ",");
+		return new SecurityConfiguration(null, null, null, null, "Token", ApiKeyVehicle.HEADER, "Authorization", ",");
 	}
     
     private ApiInfo apiInfo() {
