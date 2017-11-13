@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import exceptions.InternalMonitoringErrorException;
 import beans.Report;
+import exceptions.InternalMonitoringErrorException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -48,22 +48,23 @@ public class MonitoringController {
 	
 	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
     @ApiOperation(
-    		value = "Get status report using current position of monitored device", 
+    		value="Get status report using current position of monitored device",
+    	    notes="Erstellt Status-Report für deviceID",
     		response=Report.class,
-    		produces = "application/json")
+    		produces="application/json")
     @ResponseBody
     public JSONObject monitoring(
     		@ApiParam(name="deviceId", value="Id of monitored device (use 'demo' to see test result)", defaultValue="") 
-    		@RequestParam(value="deviceId", defaultValue="") String deviceId,
+    		@RequestParam(value="deviceId",	defaultValue="", required=true) String deviceId,
     		
     		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="1483225200")
-    		@RequestParam(value="timestamp", defaultValue="1483225200") Long timestamp,
+    		@RequestParam(value="timestamp", defaultValue="1483225200", required=true) Long timestamp,
     		
     		@ApiParam(name="appointmentLat", value="Latitude of upcoming appointment", defaultValue="51.029")
-    		@RequestParam(value="appointmentLat", defaultValue="0.0") Double latitude,
+    		@RequestParam(value="appointmentLat", defaultValue="0.0", required=true) Double latitude,
     		
     		@ApiParam(name="appointmentLon", value="Longitude of upcoming appointment", defaultValue="13.736") 
-    		@RequestParam(value="appointmentLon", defaultValue="0.0") Double longitude,
+    		@RequestParam(value="appointmentLon", defaultValue="0.0", required=true) Double longitude,
     		
     		@ApiParam(name="delay", value="Known current delay in minutes", defaultValue="5")
     		@RequestParam(value="delay", defaultValue="0") Integer delay

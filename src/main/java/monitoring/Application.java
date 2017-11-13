@@ -52,7 +52,7 @@ public class Application {
           	.paths(PathSelectors.regex("/v1/monitoring"))
           	.build()
           .genericModelSubstitutes(ResponseEntity.class)
-          .protocols(Sets.newHashSet("https"))
+          //.protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
           //.host("141.64.5.234/excell-monitoring-api")
           .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice")
@@ -92,10 +92,15 @@ public class Application {
     private ApiInfo apiInfo() {
 		ApiInfo apiInfo = new ApiInfo(
           "ExCELL Monitoring API",
-          "This API provides a status report for a monitored device A with regards to a target location B."
+          "Diese API liefert einen Status-Report für ein getracktes Gerät A in Hinblick auf das Erreichen eines Ortes B."
+          + " Der Report besteht aus mehreren Elementen: Die Koordinaten der aktuellen Position, die vorgeschlagene Route zum Ziel, die errechnete Verspätung und eine Meldung ob B erreicht ist."
+          + " Intern fragt der Monitoring Service die aktuelle Postion des Gerätes über den ExCELL Tracking Service ab."
+          + " Die verwendete deviceID muss dafür im Tracking Service hinterlegt sein."
+          + "\n"
+          + "\nThis API provides a status report for a monitored device A with regards to a target location B."
           + " It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached."
           + " Internally the Monitoring Service queries the ExCELL Tracking Service for the current position."
-          + " Please, make sure that the ID used here as first parameter also exists in the Tracking Service.",
+          + " Please, make sure that the ID used here as first parameter also exists in the Tracking Service.\n",
           "Version 1.0",
           "Use only for testing",
           new Contact(
