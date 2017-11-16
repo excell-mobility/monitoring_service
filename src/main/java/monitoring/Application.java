@@ -52,7 +52,7 @@ public class Application {
           	.paths(PathSelectors.regex("/v1/monitoring"))
           	.build()
           .genericModelSubstitutes(ResponseEntity.class)
-          //.protocols(Sets.newHashSet("https"))
+          .protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
           //.host("141.64.5.234/excell-monitoring-api")
           .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice")
