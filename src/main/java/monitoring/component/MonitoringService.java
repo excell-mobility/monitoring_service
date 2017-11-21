@@ -138,7 +138,7 @@ public class MonitoringService {
 		}
 		else {
 			Long delayInMinutes = TimeUnit.MILLISECONDS.toMinutes(calendar.getTime().getTime() 
-					- appointmentTime.getTime() + delay);
+					- appointmentTime.getTime()) + delay;
 			
 			// always add 1 minute (rounding up the seconds)
 			// only set time status to DELAYED if delay is greater than 5 minutes
