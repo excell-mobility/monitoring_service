@@ -3,6 +3,8 @@ package monitoring;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.ServletContext;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +17,7 @@ import com.google.common.collect.Sets;
 
 import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
+import springfox.documentation.builders.AuthorizationScopeBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -25,6 +28,7 @@ import springfox.documentation.service.SecurityReference;
 import springfox.documentation.service.VendorExtension;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
+import springfox.documentation.spring.web.paths.RelativePathProvider;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger.web.ApiKeyVehicle;
 import springfox.documentation.swagger.web.SecurityConfiguration;
@@ -44,21 +48,27 @@ public class Application {
     }
     
     @Bean
-    public Docket monitoringApi() { 
+    public Docket monitoringApi(ServletContext servletContext) { 
         return new Docket(DocumentationType.SWAGGER_2)
           .groupName("excell-monitoring-api")
           .select()
-          	.apis(RequestHandlerSelectors.any()) 
+          	.apis(RequestHandlerSelectors.any())
           	.paths(PathSelectors.regex("/v1/monitoring"))
           	.build()
           .genericModelSubstitutes(ResponseEntity.class)
           .protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
           //.host("141.64.5.234/excell-monitoring-api")
-          .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice/")
+          .host("dlr-integration.minglabs.com")
           .securitySchemes(Lists.newArrayList(apiKey()))
           .securityContexts(Lists.newArrayList(securityContext()))
           .apiInfo(apiInfo())
+          .pathProvider(new RelativePathProvider(servletContext) {
+                @Override
+                public String getApplicationBasePath() {
+                    return "/api/v1/service-request/monitoringservice/";
+                }
+            })
           ;
     }
     
@@ -75,10 +85,7 @@ public class Application {
 
     private List<SecurityReference> defaultAuth() {
     	List<SecurityReference> ls = new ArrayList<>();
-    	AuthorizationScope authorizationScope
-    		= new AuthorizationScope("global", "accessEverything");
-    	AuthorizationScope[] authorizationScopes = new AuthorizationScope[1];
-    	authorizationScopes[0] = authorizationScope;
+    	AuthorizationScope[] authorizationScopes = new AuthorizationScope[0];
     	SecurityReference s = new SecurityReference("api_key", authorizationScopes);
     	ls.add(s);
     	return ls;
