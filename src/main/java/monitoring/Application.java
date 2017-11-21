@@ -55,7 +55,7 @@ public class Application {
           .protocols(Sets.newHashSet("https"))
           //.host("localhost:43444")
           //.host("141.64.5.234/excell-monitoring-api")
-          .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice")
+          .host("dlr-integration.minglabs.com/api/v1/service-request/monitoringservice/")
           .securitySchemes(Lists.newArrayList(apiKey()))
           .securityContexts(Lists.newArrayList(securityContext()))
           .apiInfo(apiInfo())
