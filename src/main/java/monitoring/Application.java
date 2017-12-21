@@ -108,7 +108,7 @@ public class Application {
           + " It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached."
           + " Internally the Monitoring Service queries the ExCELL Tracking Service for the current position."
           + " Please, make sure that the ID used here as first parameter also exists in the Tracking Service.\n",
-          "Version 1.0",
+          "1.0",
           "Use only for testing",
           new Contact(
         		  "Beuth Hochschule für Technik Berlin - Labor für Rechner- und Informationssysteme - MAGDa Gruppe",
