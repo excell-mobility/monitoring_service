@@ -28,24 +28,6 @@ public class MonitoringController {
 	@Autowired
 	private MonitoringService monitoringService;
 	
-	/*
-	@Deprecated
-	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
-	@ApiOperation(
-    		value = "Get status report by checking calendar service (deprecated)", 
-    		response=Report.class,
-    		produces = "application/json")
-    @ResponseBody
-    public JSONObject monitoring(
-    		@ApiParam(name="calendarId", value="Id of calendar (see Calendar Service)", defaultValue="") 
-    		@RequestParam(value="calendarId", defaultValue="") String calendarId
-    		) throws InternalMonitoringErrorException {
-        
-		JSONObject response = monitoringService.getReport(calendarId);
-		return response;
-    }
-	*/
-	
 	@RequestMapping(value = "/v1/monitoring", method = RequestMethod.GET)
     @ApiOperation(
     		value="Get status report using current position of monitored device",
