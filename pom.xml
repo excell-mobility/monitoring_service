@@ -2,8 +2,8 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>excell</groupId>
   <artifactId>monitoring</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
- 
+  <version>1.0.0-SNAPSHOT</version>
+  
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
