@@ -39,8 +39,8 @@ public class MonitoringController {
     		@ApiParam(name="deviceId", value="Id of monitored device (use 'demo' to see test result)", defaultValue="") 
     		@RequestParam(value="deviceId",	defaultValue="", required=true) String deviceId,
     		
-    		@ApiParam(name="timestamp", value="Unix timestamp of upcoming appointment", defaultValue="1483225200")
-    		@RequestParam(value="timestamp", defaultValue="1483225200", required=true) Long timestamp,
+    		@ApiParam(name="timestamp", value="Unix timestamp in milliseconds of upcoming appointment (Note: GMT time zone required!)", defaultValue="1521802800000")
+    		@RequestParam(value="timestamp", defaultValue="1521802800000", required=true) Long timestamp,
     		
     		@ApiParam(name="appointmentLat", value="Latitude of upcoming appointment", defaultValue="51.029")
     		@RequestParam(value="appointmentLat", defaultValue="0.0", required=true) Double latitude,
