@@ -68,6 +68,9 @@ public class MonitoringService {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(currentDate);
 		
+		// add known delay
+		calendar.add(Calendar.MINUTE, delay);
+		
 		// get travel time to next appointment from current position and add it up to time estimation
 		calendar.add(Calendar.MINUTE, getRouteTravelTime(userPosition, appointmentLocation));
 		
@@ -78,7 +81,7 @@ public class MonitoringService {
 		}
 		else {
 			Long delayInMinutes = TimeUnit.MILLISECONDS.toMinutes(calendar.getTime().getTime() 
-					- appointmentTime.getTime()) + delay;
+					- appointmentTime.getTime());
 			
 			// always add 1 minute (rounding up the seconds)
 			// only set time status to DELAYED if delay is greater than 5 minutes
