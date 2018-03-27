@@ -17,7 +17,6 @@ import com.google.common.collect.Sets;
 
 import monitoring.component.MonitoringService;
 import monitoring.controller.MonitoringController;
-import springfox.documentation.builders.AuthorizationScopeBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -57,8 +56,6 @@ public class Application {
           	.build()
           .genericModelSubstitutes(ResponseEntity.class)
           .protocols(Sets.newHashSet("https"))
-          //.host("localhost:43444")
-          //.host("141.64.5.234/excell-monitoring-api")
           .host("dlr-integration.minglabs.com")
           .securitySchemes(Lists.newArrayList(apiKey()))
           .securityContexts(Lists.newArrayList(securityContext()))
@@ -114,8 +111,8 @@ public class Application {
         		  "Beuth Hochschule für Technik Berlin - Labor für Rechner- und Informationssysteme - MAGDa Gruppe",
         		  "https://projekt.beuth-hochschule.de/magda/poeple",
         		  "fkunde@beuth-hochschule"),
-          "Apache 2",
-          "http://www.apache.org/licenses/LICENSE-2.0",
+          "Link to source code",
+          "https://github.com/excell-mobility/monitoring_service",
           new ArrayList<VendorExtension>());
         return apiInfo;
     }
