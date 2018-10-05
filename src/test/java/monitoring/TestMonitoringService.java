@@ -10,11 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import beans.Report;
-import beans.WorkingStatus;
-import exceptions.InputParameterErrorException;
-import exceptions.InternalMonitoringErrorException;
-import exceptions.RoutingNotFoundException;
+import monitoring.beans.Report;
+import monitoring.beans.WorkingStatus;
+import monitoring.exceptions.InputParameterErrorException;
+import monitoring.exceptions.InternalMonitoringErrorException;
+import monitoring.exceptions.RoutingNotFoundException;
 import monitoring.component.MonitoringService;
 
 

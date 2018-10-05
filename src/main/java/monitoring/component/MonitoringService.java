@@ -9,14 +9,14 @@ import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 
-import rest.RoutingConnector;
-import rest.TrackingConnector;
-import utility.DistanceCalculator;
-import utility.MeasureConverter;
-import beans.GeoPoint;
-import beans.Report;
-import beans.WorkingStatus;
-import exceptions.InternalMonitoringErrorException;
+import monitoring.connector.RoutingConnector;
+import monitoring.connector.TrackingConnector;
+import monitoring.utility.DistanceCalculator;
+import monitoring.utility.MeasureConverter;
+import monitoring.beans.GeoPoint;
+import monitoring.beans.Report;
+import monitoring.beans.WorkingStatus;
+import monitoring.exceptions.InternalMonitoringErrorException;
 
 @Component
 public class MonitoringService {
