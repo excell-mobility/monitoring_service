@@ -1,10 +1,14 @@
 # ExCELL Monitoring Service
 
-This API provides a status report for a monitored device A with regards to a target location B. It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached. Internally the Monitoring Service queries the ExCELL Tracking Service for the current position. Please, make sure that the ID used here as first parameter also exists in the Tracking Service.
+This API provides a status report for a monitored device A with regards to a target location B. It returns the coordinates of locations A and B, the proposed route between them, calculates the delay and tells you when B is reached. Internally the Monitoring Service queries the [ExCELL Tracking API](https://www.excell-mobility.de/developer/docs.php?service=tracking_service) for the current position. Please, make sure that the ID used here as first parameter also exists in the Tracking Service.
 
 ## Setup
 
 This web service comes as a [SpringBoot](https://projects.spring.io/spring-boot/) application so it's very easy to test it on your local machine. If you run the service from inside a Java IDE a Tomcat server will be launched and you can access the service through a browser via localhost:44434.
+
+### Application properties
+
+Internally, the Monitoring Service calls the [ExCELL Routing API](https://github.com/excell-mobility/routing_service) to calculate the delay for the final report. The user can set up his/her own Routing Service or use the online version on the [ExCELL Developer Portal](https://www.excell-mobility.de/developer/docs.php?service=routing_service). The parameter `url.routingservice` in the `application.properties` defines which endpoint is used. The URL of the online API is the default setting but it requires a user login which can be configured in the `application.properties` as well. By default, the token is provided by the [ExCELL API Gateway](https://dlr-integration.minglabs.com/api/v1/tokenauth/). If user authentification is not required change the parameter of `url.routingservice.auth` to `false`. Please, apply the setup for the Tracking Service.
 
 ### Build it
 
@@ -32,13 +36,13 @@ An online version of the monitoring API is available on the ExCELL Developer Por
 
 * Felix Kunde (BHS)
 * Stephan Piper (BHS)
+* Oguzhan Uyar (BHS)
 * Maximilian Allies (BHS)
 
 
 ## Contact
 
 * fkunde [at] beuth-hochschule.de
-* spieper [at] beuth-hochschule.de
 
 
 ## Acknowledgement
