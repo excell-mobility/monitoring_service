@@ -10,12 +10,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import monitoring.component.MonitoringService;
+import monitoring.connector.RoutingConnector;
+import monitoring.connector.TrackingConnector;
 import monitoring.controller.MonitoringController;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -34,11 +35,12 @@ import springfox.documentation.swagger.web.SecurityConfiguration;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
-@EnableScheduling
 @EnableSwagger2
 @ComponentScan(basePackageClasses = {
 		MonitoringController.class,
-		MonitoringService.class
+		MonitoringService.class,
+		RoutingConnector.class,
+		TrackingConnector.class
 	})
 public class Application {
 
@@ -56,14 +58,14 @@ public class Application {
           	.build()
           .genericModelSubstitutes(ResponseEntity.class)
           .protocols(Sets.newHashSet("https"))
-          .host("dlr-integration.minglabs.com")
+          .host("excell-mobility.de")
           .securitySchemes(Lists.newArrayList(apiKey()))
           .securityContexts(Lists.newArrayList(securityContext()))
           .apiInfo(apiInfo())
           .pathProvider(new RelativePathProvider(servletContext) {
                 @Override
                 public String getApplicationBasePath() {
-                    return "/api/v1/service-request/monitoringservice";
+                    return "/integration/api/v1/service-request/monitoringservice";
                 }
             })
           ;
