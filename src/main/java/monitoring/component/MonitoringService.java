@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.google.common.collect.Lists;
 
@@ -21,8 +22,10 @@ import monitoring.exceptions.InternalMonitoringErrorException;
 @Component
 public class MonitoringService {
 	
- 	private final RoutingConnector routingConnector;
- 	private final TrackingConnector trackingConnector;
+	@Autowired
+ 	private RoutingConnector routingConnector;
+	@Autowired
+ 	private TrackingConnector trackingConnector;
 	
 	public MonitoringService() {
  		this.routingConnector = new RoutingConnector();
